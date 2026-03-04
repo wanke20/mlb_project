@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Prediction</title>
+</head>
+<body>
+    <h1>{{ game.away_team.name }} @ {{ game.home_team.name }}</h1>
+
+    <h2>Win Probability</h2>
+    <p>Mean: {{ prediction.win_probability }}</p>
+    <img src="data:image/png;base64,{{ win_image }}" />
+
+    <h2>Run Differential</h2>
+    <p>Expected Run Diff: {{ prediction.expected_run_diff }}</p>
+    <img src="data:image/png;base64,{{ run_image }}" />
+</body>
+</html>

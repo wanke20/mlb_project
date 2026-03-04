@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MLB Games</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+
+        .game-card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: black;
+            display: block;
+        }
+
+        .game-card:hover {
+            background: #eef2ff;
+        }
+
+        .team {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .record {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .pitcher {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Today's Games</h1>
+
+{% for game in games %}
+<a class="game-card" href="{% url 'game_prediction' game.game_id %}">
+    
+    <div class="team">
+        {{ game.away_team.name }} @ {{ game.home_team.name }}
+    </div>
+
+    <div class="record">
+        {{ game.away_team.name }}: 
+        {{ game.away_team.wins }}-{{ game.away_team.losses }}
+        (Last 10: {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }})
+    </div>
+
+    <div class="record">
+        {{ game.home_team.name }}: 
+        {{ game.home_team.wins }}-{{ game.home_team.losses }}
+        (Last 10: {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }})
+    </div>
+
+    <div class="pitcher">
+        Away SP: 
+        {% if game.away_pitcher %}
+            {{ game.away_pitcher.name }} ({{ game.away_pitcher.era }} ERA)
+        {% else %}
+            TBD
+        {% endif %}
+    </div>
+
+    <div class="pitcher">
+        Home SP:
+        {% if game.home_pitcher %}
+            {{ game.home_pitcher.name }} ({{ game.home_pitcher.era }} ERA)
+        {% else %}
+            TBD
+        {% endif %}
+    </div>
+
+</a>
+{% endfor %}
+
+</body>
+</html>
