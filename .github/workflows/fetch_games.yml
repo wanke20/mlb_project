@@ -24,7 +24,9 @@ jobs:
 
       - name: Run fetch_games command
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+            DATABASE_USER: ${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+            HOST: ${{ secrets.HOST }}
+            DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         run: |
-          python manage.py fetch_games
+            python manage.py fetch_games
