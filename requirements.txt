@@ -5,3 +5,5 @@ dj-database-url
 whitenoise
 python-dotenv
 numpy
+matplotlib
+scipy
