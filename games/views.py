@@ -11,6 +11,9 @@ from django.http import JsonResponse
 from .models import Game
 from games.services.prediction import predict_game
 
+def home_page(request):
+    return render(request, "games/home.html")
+
 
 def game_list(request):
     games = Game.objects.select_related(
