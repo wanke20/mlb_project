@@ -32,7 +32,21 @@ def get_standings(season=2025):
     return r.json()
 
 
-def get_pitcher_era(pitcher_id):
+def safe_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def safe_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def get_pitcher_stats(pitcher_id):
     year = 2025
 
     url = f"{BASE_URL}/people/{pitcher_id}"
@@ -47,14 +61,30 @@ def get_pitcher_era(pitcher_id):
 
     people = data.get("people", [])
     if not people:
-        return None
+        return {
+            "era": None,
+            "whip": None,
+            "strikeouts": None,
+            "walks": None,
+            "innings_pitched": None,
+        }
 
     stats = people[0].get("stats", [])
 
     if stats and stats[0].get("splits"):
-        try:
-            return float(stats[0]["splits"][0]["stat"]["era"])
-        except (KeyError, ValueError, IndexError):
-            return None
+        stat = stats[0]["splits"][0].get("stat", {})
+        return {
+            "era": safe_float(stat.get("era")),
+            "whip": safe_float(stat.get("whip")),
+            "strikeouts": safe_int(stat.get("strikeOuts")),
+            "walks": safe_int(stat.get("baseOnBalls")),
+            "innings_pitched": stat.get("inningsPitched"),
+        }
 
-    return None
+    return {
+        "era": None,
+        "whip": None,
+        "strikeouts": None,
+        "walks": None,
+        "innings_pitched": None,
+    }

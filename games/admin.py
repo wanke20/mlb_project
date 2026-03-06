@@ -9,7 +9,7 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(Pitcher)
 class PitcherAdmin(admin.ModelAdmin):
-    list_display = ("name", "mlb_id", "era")
+    list_display = ("name", "mlb_id", "era", "whip", "strikeouts", "walks", "innings_pitched")
 
 
 @admin.register(Game)

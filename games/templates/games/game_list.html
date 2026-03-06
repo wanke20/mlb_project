@@ -45,11 +45,20 @@
     </style>
 </head>
 <body>
+{% load tz %}
 
-<h1>Today's Games</h1>
+<h1>Today's Games ({% timezone "America/New_York" %}{% now "F jS" %}{% endtimezone %})</h1>
 
 {% for game in games %}
 <a class="game-card" href="{% url 'game_prediction' game.game_id %}">
+    <div class="record">
+        Start Time (ET):
+        {% if game.start_time_utc %}
+            {{ game.start_time_utc|timezone:"America/New_York"|date:"g:i A" }}
+        {% else %}
+            TBD
+        {% endif %}
+    </div>
     
     <div class="team">
         {{ game.away_team.name }} @ {{ game.home_team.name }}
@@ -70,7 +79,8 @@
     <div class="pitcher">
         Away SP: 
         {% if game.away_pitcher %}
-            {{ game.away_pitcher.name }} ({{ game.away_pitcher.era }} ERA)
+            {{ game.away_pitcher.name }}
+            ({{ game.away_pitcher.era|default:"0.00" }} ERA)
         {% else %}
             TBD
         {% endif %}
@@ -79,7 +89,8 @@
     <div class="pitcher">
         Home SP:
         {% if game.home_pitcher %}
-            {{ game.home_pitcher.name }} ({{ game.home_pitcher.era }} ERA)
+            {{ game.home_pitcher.name }}
+            ({{ game.home_pitcher.era|default:"0.00" }} ERA)
         {% else %}
             TBD
         {% endif %}

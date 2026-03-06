@@ -17,6 +17,10 @@ class Pitcher(models.Model):
     name = models.CharField(max_length=100)
     mlb_id = models.IntegerField(unique=True)
     era = models.FloatField(null=True, blank=True)
+    whip = models.FloatField(null=True, blank=True)
+    strikeouts = models.IntegerField(null=True, blank=True)
+    walks = models.IntegerField(null=True, blank=True)
+    innings_pitched = models.CharField(max_length=16, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -25,6 +29,7 @@ class Pitcher(models.Model):
 class Game(models.Model):
     game_id = models.IntegerField(unique=True)
     date = models.DateField()
+    start_time_utc = models.DateTimeField(null=True, blank=True)
 
     home_team = models.ForeignKey(Team, related_name="home_games", on_delete=models.CASCADE)
     away_team = models.ForeignKey(Team, related_name="away_games", on_delete=models.CASCADE)

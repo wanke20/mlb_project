@@ -5,6 +5,134 @@
 </head>
 <body>
     <h1>{{ game.away_team.name }} @ {{ game.home_team.name }}</h1>
+    <h2>Matchup Summary</h2>
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Team</th>
+                <th>Record</th>
+                <th>Last 10</th>
+                <th>Probable Pitcher</th>
+                <th>ERA</th>
+                <th>WHIP</th>
+                <th>SO</th>
+                <th>BB</th>
+                <th>IP</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ game.away_team.name }} (Away)</td>
+                <td>
+                    {% if game.away_team.wins is not None and game.away_team.losses is not None %}
+                        {{ game.away_team.wins }}-{{ game.away_team.losses }}
+                    {% else %}
+                        0-0
+                    {% endif %}
+                </td>
+                <td>
+                    {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }}
+                </td>
+                <td>
+                    {% if game.away_pitcher %}
+                        {{ game.away_pitcher.name }}
+                    {% else %}
+                        TBA
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.away_pitcher and game.away_pitcher.era is not None %}
+                        {{ game.away_pitcher.era }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.away_pitcher and game.away_pitcher.whip is not None %}
+                        {{ game.away_pitcher.whip }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.away_pitcher and game.away_pitcher.strikeouts is not None %}
+                        {{ game.away_pitcher.strikeouts }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.away_pitcher and game.away_pitcher.walks is not None %}
+                        {{ game.away_pitcher.walks }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.away_pitcher and game.away_pitcher.innings_pitched %}
+                        {{ game.away_pitcher.innings_pitched }}
+                    {% else %}
+                        0.0
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>{{ game.home_team.name }} (Home)</td>
+                <td>
+                    {% if game.home_team.wins is not None and game.home_team.losses is not None %}
+                        {{ game.home_team.wins }}-{{ game.home_team.losses }}
+                    {% else %}
+                        0-0
+                    {% endif %}
+                </td>
+                <td>
+                    {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }}
+                </td>
+                <td>
+                    {% if game.home_pitcher %}
+                        {{ game.home_pitcher.name }}
+                    {% else %}
+                        TBA
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.home_pitcher and game.home_pitcher.era is not None %}
+                        {{ game.home_pitcher.era }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.home_pitcher and game.home_pitcher.whip is not None %}
+                        {{ game.home_pitcher.whip }}
+                    {% else %}
+                        0.00
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.home_pitcher and game.home_pitcher.strikeouts is not None %}
+                        {{ game.home_pitcher.strikeouts }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.home_pitcher and game.home_pitcher.walks is not None %}
+                        {{ game.home_pitcher.walks }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </td>
+                <td>
+                    {% if game.home_pitcher and game.home_pitcher.innings_pitched %}
+                        {{ game.home_pitcher.innings_pitched }}
+                    {% else %}
+                        0.0
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
 
     <h2>Win Probability</h2>
     <p>Mean: {{ prediction.win_probability }}</p>

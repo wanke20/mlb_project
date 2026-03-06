@@ -1,7 +1,8 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils.dateparse import parse_datetime
 from games.models import Team, Pitcher, Game
-from games.services.mlb_api import get_schedule, get_pitcher_era, get_standings
+from games.services.mlb_api import get_schedule, get_pitcher_stats, get_standings
 from datetime import datetime
 
 import logging
@@ -73,11 +74,17 @@ class Command(BaseCommand):
         total_games = 0
 
         with transaction.atomic():
+            deleted_games, _ = Game.objects.all().delete()
+            self.stdout.write(
+                self.style.WARNING(f"Removed {deleted_games} existing games before refresh.")
+            )
+
             for d in data.get("dates", []):
                 game_date = datetime.strptime(d["date"], "%Y-%m-%d").date()
 
                 for game in d.get("games", []):
                     game_id = game["gamePk"]
+                    game_start_utc = parse_datetime(game.get("gameDate")) if game.get("gameDate") else None
 
                     # -----------------------
                     # Teams
@@ -106,16 +113,20 @@ class Command(BaseCommand):
                         pitcher_id = pitcher_data["id"]
                         
                         try:
-                            era = get_pitcher_era(pitcher_id)
+                            pitcher_stats = get_pitcher_stats(pitcher_id)
                         except Exception as e:
-                            logger.error(f"Failed to fetch standings: {e}")
+                            logger.error(f"Failed to fetch pitcher stats: {e}")
                             return
 
                         pitcher, _ = Pitcher.objects.update_or_create(
                             mlb_id=pitcher_id,
                             defaults={
                                 "name": pitcher_data["fullName"],
-                                "era": era
+                                "era": pitcher_stats["era"],
+                                "whip": pitcher_stats["whip"],
+                                "strikeouts": pitcher_stats["strikeouts"],
+                                "walks": pitcher_stats["walks"],
+                                "innings_pitched": pitcher_stats["innings_pitched"],
                             }
                         )
 
@@ -131,6 +142,7 @@ class Command(BaseCommand):
                         game_id=game_id,
                         defaults={
                             "date": game_date,
+                            "start_time_utc": game_start_utc,
                             "home_team": home_team,
                             "away_team": away_team,
                             "home_pitcher": home_pitcher,

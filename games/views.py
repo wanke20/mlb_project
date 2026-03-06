@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from django.shortcuts import render, get_object_or_404
 from scipy.stats import norm
 from django.http import JsonResponse
+from django.db.models import F
 from .models import Game
 from games.services.prediction import predict_game
 
@@ -18,7 +19,7 @@ def home_page(request):
 def game_list(request):
     games = Game.objects.select_related(
         "home_team", "away_team", "home_pitcher", "away_pitcher"
-    )
+    ).order_by(F("start_time_utc").asc(nulls_last=True), "game_id")
 
     context = {
         "games": games
@@ -57,7 +58,7 @@ def game_prediction(request, game_id):
 
     plt.figure()
     plt.plot(x, y)
-    plt.title("Logit-Normal Win Probability Distribution")
+    plt.title("Win Probability Distribution")
     plt.xlabel(f"Home Win Probability ({game.home_team.name})")
     plt.ylabel("Density")
 
