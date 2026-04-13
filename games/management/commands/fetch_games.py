@@ -3,7 +3,7 @@ from django.db import transaction
 from django.utils.dateparse import parse_datetime
 from games.models import Team, Pitcher, Game
 from games.services.mlb_api import get_schedule, get_pitcher_stats, get_standings
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 
 import logging
 logger = logging.getLogger(__name__)
@@ -66,8 +66,7 @@ class Command(BaseCommand):
         # Step 2: Update games and probable pitchers
         # -----------------------
         try:
-            tomorrow = date.today() + timedelta(days=1)
-            data = get_schedule(game_date=tomorrow.strftime("%Y-%m-%d"))
+            data = get_schedule(game_date=date.today().strftime("%Y-%m-%d"))
         except Exception as e:
             logger.error(f"Failed to fetch schedule: {e}")
             return
