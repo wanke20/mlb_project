@@ -3,21 +3,21 @@ from django.db import transaction
 from django.utils.dateparse import parse_datetime
 from games.models import Team, Pitcher, Game
 from games.services.mlb_api import get_schedule, get_pitcher_stats, get_standings
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 import logging
 logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Fetch MLB games, pitchers, and 2025 team records, and store in DB"
+    help = "Fetch MLB games, pitchers, and 2026 team records, and store in DB"
 
     def handle(self, *args, **kwargs):
         # -----------------------
         # Step 1: Update team records
         # -----------------------
         try:
-            standings = get_standings(season=2025)
+            standings = get_standings(season=2026)
         except Exception as e:
             logger.error(f"Failed to fetch standings: {e}")
             return
@@ -59,14 +59,15 @@ class Command(BaseCommand):
                     total_teams += 1
 
         self.stdout.write(
-            self.style.SUCCESS(f"Successfully updated {total_teams} teams for 2025 records.")
+            self.style.SUCCESS(f"Successfully updated {total_teams} teams for 2026 records.")
         )
 
         # -----------------------
         # Step 2: Update games and probable pitchers
         # -----------------------
         try:
-            data = get_schedule()
+            tomorrow = date.today() + timedelta(days=1)
+            data = get_schedule(game_date=tomorrow.strftime("%Y-%m-%d"))
         except Exception as e:
             logger.error(f"Failed to fetch schedule: {e}")
             return

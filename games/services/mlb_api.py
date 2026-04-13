@@ -19,7 +19,7 @@ def get_schedule(game_date=None):
     return r.json()
 
 
-def get_standings(season=2025):
+def get_standings(season=2026):
     url = f"{BASE_URL}/standings"
     params = {
         "sportId": 1,
@@ -47,7 +47,7 @@ def safe_int(value):
 
 
 def get_pitcher_stats(pitcher_id):
-    year = 2025
+    year = 2026
 
     url = f"{BASE_URL}/people/{pitcher_id}"
     params = {

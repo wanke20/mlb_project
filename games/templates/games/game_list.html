@@ -80,7 +80,7 @@
         Away SP: 
         {% if game.away_pitcher %}
             {{ game.away_pitcher.name }}
-            ({{ game.away_pitcher.era|default:"0.00" }} ERA)
+            ({{ game.away_pitcher.era|default:"0.0" }} ERA)
         {% else %}
             TBD
         {% endif %}
@@ -90,7 +90,7 @@
         Home SP:
         {% if game.home_pitcher %}
             {{ game.home_pitcher.name }}
-            ({{ game.home_pitcher.era|default:"0.00" }} ERA)
+            ({{ game.home_pitcher.era|default:"0.0" }} ERA)
         {% else %}
             TBD
         {% endif %}

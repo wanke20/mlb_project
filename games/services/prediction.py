@@ -17,7 +17,9 @@ W_LAST10 = 1.5
 W_ERA = 0.6
 SIGMA_RUNS = 2.5
 
-DEFAULT_ERA = 4.60
+# Bayesian ERA constants
+LEAGUE_AVG_ERA = 4.50   # Prior mean: regress unknown pitchers to league average
+IP_PRIOR = 30           # Pseudo-innings for prior; confidence = 0.5 at this many IP
 
 
 def parse_record(record_str):
@@ -30,8 +32,52 @@ def parse_last10(last10_str):
     return wins / 10
 
 
-def safe_float(val):
-    return float(val) if val is not None else DEFAULT_ERA
+def parse_innings_pitched(ip_str):
+    """Convert baseball innings string (e.g. '123.2') to fractional innings.
+    The digit after the decimal represents outs, not tenths: '123.2' = 123 + 2/3.
+    Returns 0.0 when ip_str is None or unparseable.
+    """
+    if ip_str is None:
+        return 0.0
+    try:
+        ip = float(ip_str)
+        whole = int(ip)
+        outs = round((ip - whole) * 10)
+        return whole + outs / 3.0
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def era_confidence(ip_float):
+    """Bayesian confidence weight for an ERA estimate based on innings pitched.
+    Returns 0 when ip_float == 0 (no data) and approaches 1 as innings grow.
+    Reaches 0.5 at IP_PRIOR innings pitched.
+    """
+    return ip_float / (ip_float + IP_PRIOR)
+
+
+def effective_pitcher_era(pitcher):
+    """Return a confidence-weighted ERA for use in the Bayesian model.
+
+    Blends the pitcher's actual ERA toward LEAGUE_AVG_ERA proportionally to
+    innings pitched.  When a pitcher has no stats (ERA stored as None/0 and
+    IP = 0), confidence is 0 and the effective ERA is the league average —
+    i.e. the pitcher contributes no advantage or disadvantage to the model.
+    As innings pitched grows, the estimate shifts from the prior toward the
+    observed ERA.
+
+    Also returns the raw confidence so the caller can adjust PRIOR_STRENGTH.
+    """
+    if pitcher is None:
+        return LEAGUE_AVG_ERA, 0.0
+
+    raw_era = float(pitcher.era) if pitcher.era is not None else 0.0
+    ip = parse_innings_pitched(getattr(pitcher, "innings_pitched", None))
+    conf = era_confidence(ip)
+
+    # Bayesian blend: observed ERA weighted by innings, prior weighted by (1 - conf)
+    blended_era = conf * raw_era + (1 - conf) * LEAGUE_AVG_ERA
+    return blended_era, conf
 
 
 def predict_game(home_team, away_team, home_pitcher, away_pitcher):
@@ -46,8 +92,13 @@ def predict_game(home_team, away_team, home_pitcher, away_pitcher):
     home_last10 = home_team.last10_wins / 10
     away_last10 = away_team.last10_wins / 10
 
-    home_era = safe_float(getattr(home_pitcher, "era", None))
-    away_era = safe_float(getattr(away_pitcher, "era", None))
+    home_era, home_era_conf = effective_pitcher_era(home_pitcher)
+    away_era, away_era_conf = effective_pitcher_era(away_pitcher)
+
+    # Scale PRIOR_STRENGTH down when pitcher data is sparse so the confidence
+    # interval widens to reflect genuine uncertainty.
+    avg_era_conf = (home_era_conf + away_era_conf) / 2
+    effective_prior = PRIOR_STRENGTH * (0.5 + 0.5 * avg_era_conf)
 
     season_diff = home_season - away_season
     last10_diff = home_last10 - away_last10
@@ -62,8 +113,8 @@ def predict_game(home_team, away_team, home_pitcher, away_pitcher):
     )
 
     prior_p = 1 / (1 + np.exp(-logit_p))
-    alpha = prior_p * PRIOR_STRENGTH
-    beta_param = (1 - prior_p) * PRIOR_STRENGTH
+    alpha = prior_p * effective_prior
+    beta_param = (1 - prior_p) * effective_prior
 
     mean = alpha / (alpha + beta_param)
     ci_low, ci_high = beta.ppf([0.05, 0.95], alpha, beta_param)
