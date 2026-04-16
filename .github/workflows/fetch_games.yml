@@ -1,8 +1,10 @@
-name: Nightly Fetch Games
+name: Fetch Games
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # Runs daily at 3 AM UTC (11 PM EDT)
+    - cron: '0 3  * * *'   # 3 AM UTC  (11 PM EDT)
+    - cron: '0 9  * * *'   # 9 AM UTC  (5 AM EDT)
+    - cron: '0 15 * * *'   # 3 PM UTC  (11 AM EDT)
   workflow_dispatch:      # Allows manual run
 
 jobs:

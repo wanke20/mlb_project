@@ -9,6 +9,19 @@ class Team(models.Model):
     last10_wins = models.IntegerField(default=0)
     last10_losses = models.IntegerField(default=0)
 
+    # Streak
+    streak_type = models.CharField(max_length=1, null=True, blank=True)  # 'W' or 'L'
+    streak_length = models.IntegerField(null=True, blank=True)
+
+    # Last 7 days hitting
+    last7_runs = models.IntegerField(null=True, blank=True)
+
+    # Season hitting
+    season_avg = models.CharField(max_length=8, null=True, blank=True)
+    season_ops = models.CharField(max_length=8, null=True, blank=True)
+    season_runs = models.IntegerField(null=True, blank=True)
+    season_strikeouts = models.IntegerField(null=True, blank=True)
+
     def __str__(self):
         return self.name
 

@@ -2,7 +2,10 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
 from games.models import Team, Pitcher, Game
-from games.services.mlb_api import get_schedule, get_pitcher_stats, get_standings
+from games.services.mlb_api import (
+    get_schedule, get_pitcher_stats, get_standings,
+    get_team_season_hitting_stats, get_team_last7_hitting_stats,
+)
 from datetime import datetime, date
 
 import logging
@@ -45,6 +48,16 @@ class Command(BaseCommand):
                             last10_losses = split.get("losses", 0)
                             break
 
+                    streak = team_record.get("streak", {})
+                    streak_type = None
+                    streak_length = None
+                    if streak.get("streakType") == "wins":
+                        streak_type = "W"
+                        streak_length = streak.get("streakNumber")
+                    elif streak.get("streakType") == "losses":
+                        streak_type = "L"
+                        streak_length = streak.get("streakNumber")
+
                     Team.objects.update_or_create(
                         mlb_id=team_id,
                         defaults={
@@ -53,7 +66,9 @@ class Command(BaseCommand):
                             "losses": losses,
                             "win_pct": pct,
                             "last10_wins": last10_wins,
-                            "last10_losses": last10_losses
+                            "last10_losses": last10_losses,
+                            "streak_type": streak_type,
+                            "streak_length": streak_length,
                         }
                     )
                     total_teams += 1
@@ -63,7 +78,40 @@ class Command(BaseCommand):
         )
 
         # -----------------------
-        # Step 2: Update games and probable pitchers
+        # Step 2: Update season hitting stats
+        # -----------------------
+        try:
+            season_stats = get_team_season_hitting_stats(season=2026)
+            for team_id, stats in season_stats.items():
+                Team.objects.filter(mlb_id=team_id).update(
+                    season_avg=stats["avg"],
+                    season_ops=stats["ops"],
+                    season_runs=stats["runs"],
+                    season_strikeouts=stats["strikeouts"],
+                )
+            self.stdout.write(
+                self.style.SUCCESS(f"Updated season hitting stats for {len(season_stats)} teams.")
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch season hitting stats: {e}")
+
+        # -----------------------
+        # Step 3: Update last 7 days runs
+        # -----------------------
+        try:
+            last7_stats = get_team_last7_hitting_stats(season=2026)
+            for team_id, stats in last7_stats.items():
+                Team.objects.filter(mlb_id=team_id).update(
+                    last7_runs=stats["runs"],
+                )
+            self.stdout.write(
+                self.style.SUCCESS(f"Updated last-7-day runs for {len(last7_stats)} teams.")
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch last-7-day hitting stats: {e}")
+
+        # -----------------------
+        # Step 4: Update games and probable pitchers
         # -----------------------
         try:
             data = get_schedule(game_date=date.today().strftime("%Y-%m-%d"))

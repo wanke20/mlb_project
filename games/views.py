@@ -9,11 +9,16 @@ from django.shortcuts import render, get_object_or_404
 from scipy.stats import norm
 from django.http import JsonResponse
 from django.db.models import F
-from .models import Game
+from .models import Game, Team
 from games.services.prediction import predict_game
 
 def home_page(request):
     return render(request, "games/home.html")
+
+
+def trends(request):
+    teams = Team.objects.filter(wins__isnull=False).order_by("-wins", "losses")
+    return render(request, "games/trends.html", {"teams": teams})
 
 
 def game_list(request):

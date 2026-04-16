@@ -1,5 +1,5 @@
 import requests
-from datetime import date
+from datetime import date, timedelta
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
@@ -30,6 +30,61 @@ def get_standings(season=2026):
     r = requests.get(url, params=params, timeout=10)
     r.raise_for_status()
     return r.json()
+
+
+def get_team_season_hitting_stats(season=2026):
+    """Return season hitting stats for all MLB teams as a dict keyed by team_id."""
+    url = f"{BASE_URL}/teams/stats"
+    params = {
+        "stats": "season",
+        "season": season,
+        "group": "hitting",
+        "sportId": 1,
+    }
+    r = requests.get(url, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    result = {}
+    for split in data.get("stats", [{}])[0].get("splits", []):
+        team_id = split.get("team", {}).get("id")
+        stat = split.get("stat", {})
+        if team_id:
+            result[team_id] = {
+                "avg": stat.get("avg"),
+                "ops": stat.get("ops"),
+                "runs": safe_int(stat.get("runs")),
+                "strikeouts": safe_int(stat.get("strikeOuts")),
+            }
+    return result
+
+
+def get_team_last7_hitting_stats(season=2026):
+    """Return hitting stats for the last 7 days for all MLB teams, keyed by team_id."""
+    end_date = date.today()
+    start_date = end_date - timedelta(days=6)
+    url = f"{BASE_URL}/teams/stats"
+    params = {
+        "stats": "byDateRange",
+        "season": season,
+        "startDate": start_date.strftime("%m/%d/%Y"),
+        "endDate": end_date.strftime("%m/%d/%Y"),
+        "group": "hitting",
+        "sportId": 1,
+    }
+    r = requests.get(url, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    result = {}
+    for split in data.get("stats", [{}])[0].get("splits", []):
+        team_id = split.get("team", {}).get("id")
+        stat = split.get("stat", {})
+        if team_id:
+            result[team_id] = {
+                "runs": safe_int(stat.get("runs")),
+            }
+    return result
 
 
 def safe_float(value):
