@@ -4,43 +4,118 @@
 
 {% block content %}
 {% load tz %}
-<h1>Today's Games</h1>
-<p class="subtitle">{% timezone "America/New_York" %}{% now "F jS, Y" %}{% endtimezone %}</p>
 
+<style>
+    .page-header {
+        margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+        font-size: 26px;
+        margin-bottom: 4px;
+    }
+
+    .games-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 18px;
+    }
+
+    .game-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        text-decoration: none;
+        color: var(--text);
+        display: block;
+        transition: border-color 0.15s, transform 0.1s;
+    }
+
+    .game-divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 12px 0;
+    }
+
+    .game-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        text-decoration: none;
+        color: var(--text);
+    }
+
+    .game-time {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .game-matchup {
+        font-size: 17px;
+        font-weight: bold;
+        margin-bottom: 12px;
+    }
+
+    .game-record {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+
+    .game-pitcher {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+</style>
+
+<div class="page-header">
+    <h1>Today's Games</h1>
+    <p class="subtitle">{% timezone "America/New_York" %}{% now "F jS, Y" %}{% endtimezone %}</p>
+</div>
+
+<div class="games-grid">
 {% for game in games %}
-<a class="card" href="{% url 'game_prediction' game.game_id %}">
-    <div class="meta">
+<a class="game-card" href="{% url 'game_prediction' game.game_id %}">
+
+    <div class="game-time">
+        Start Time (ET):
         {% if game.start_time_utc %}
-            {{ game.start_time_utc|timezone:"America/New_York"|date:"g:i A" }} ET
+            {{ game.start_time_utc|timezone:"America/New_York"|date:"g:i A" }}
         {% else %}
-            Time TBD
+            TBD
         {% endif %}
     </div>
 
-    <div class="team">
+    <div class="game-matchup">
         {{ game.away_team.name }} @ {{ game.home_team.name }}
     </div>
 
-    <div class="meta">
+    <div class="game-record">
         {{ game.away_team.name }}:
         {{ game.away_team.wins }}-{{ game.away_team.losses }}
-        &nbsp;|&nbsp; Last 10: {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }}
+        (Last 10: {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }})
     </div>
-
-    <div class="meta">
-        {{ game.home_team.name }}:
-        {{ game.home_team.wins }}-{{ game.home_team.losses }}
-        &nbsp;|&nbsp; Last 10: {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }}
-    </div>
-
-    <div class="meta">
+    <div class="game-pitcher">
         Away SP:
         {% if game.away_pitcher %}
             {{ game.away_pitcher.name }} ({{ game.away_pitcher.era|default:"—" }} ERA)
         {% else %}
             TBD
         {% endif %}
-        &nbsp;&nbsp;
+    </div>
+
+    <hr class="game-divider">
+
+    <div class="game-record">
+        {{ game.home_team.name }}:
+        {{ game.home_team.wins }}-{{ game.home_team.losses }}
+        (Last 10: {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }})
+    </div>
+    <div class="game-pitcher">
         Home SP:
         {% if game.home_pitcher %}
             {{ game.home_pitcher.name }} ({{ game.home_pitcher.era|default:"—" }} ERA)
@@ -48,8 +123,11 @@
             TBD
         {% endif %}
     </div>
+
 </a>
 {% empty %}
-<p>No games found for today.</p>
+<p style="color: var(--text-muted);">No games found for today.</p>
 {% endfor %}
+</div>
+
 {% endblock %}
