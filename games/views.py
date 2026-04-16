@@ -48,12 +48,29 @@ def game_prediction(request, game_id):
         game.away_pitcher,
     )
 
+    BG      = "#161b22"
+    SURFACE = "#0d1117"
+    TEXT    = "#e6edf3"
+    MUTED   = "#8b949e"
+    ACCENT  = "#58a6ff"
+    GRID    = "#30363d"
+
+    def apply_dark(ax, fig):
+        fig.patch.set_facecolor(BG)
+        ax.set_facecolor(SURFACE)
+        ax.tick_params(colors=MUTED, labelsize=9)
+        ax.xaxis.label.set_color(MUTED)
+        ax.yaxis.label.set_color(MUTED)
+        ax.title.set_color(TEXT)
+        for spine in ax.spines.values():
+            spine.set_edgecolor(GRID)
+        ax.grid(True, color=GRID, linewidth=0.5, linestyle="--", alpha=0.6)
+
     # ------------------------
     # Logit-Normal (Win Prob)
     # ------------------------
     mean_p = prediction["win_probability"]
 
-    # Convert to logit space
     logit_mean = np.log(mean_p / (1 - mean_p))
     sigma_logit = 0.6  # tune this later via calibration
 
@@ -61,15 +78,16 @@ def game_prediction(request, game_id):
     logit_x = np.log(x / (1 - x))
     y = norm.pdf(logit_x, logit_mean, sigma_logit) / (x * (1 - x))
 
-    plt.figure()
-    plt.plot(x, y)
-    plt.title("Win Probability Distribution")
-    plt.xlabel(f"Home Win Probability ({game.home_team.name})")
-    plt.ylabel("Density")
+    fig, ax = plt.subplots()
+    ax.plot(x, y, color=ACCENT, linewidth=1.8)
+    ax.set_title("Win Probability Distribution")
+    ax.set_xlabel(f"Home Win Probability ({game.home_team.name})")
+    ax.set_ylabel("Density")
+    apply_dark(ax, fig)
 
     buf = io.BytesIO()
-    plt.savefig(buf, format="png")
-    plt.close()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    plt.close(fig)
     buf.seek(0)
     win_image = base64.b64encode(buf.getvalue()).decode("utf-8")
 
@@ -82,15 +100,16 @@ def game_prediction(request, game_id):
     x2 = np.linspace(mu - 4*sigma_runs, mu + 4*sigma_runs, 400)
     y2 = norm.pdf(x2, mu, sigma_runs)
 
-    plt.figure()
-    plt.plot(x2, y2)
-    plt.title("Run Differential Distribution")
-    plt.xlabel("Run Differential (Home - Away)")
-    plt.ylabel("Density")
+    fig2, ax2 = plt.subplots()
+    ax2.plot(x2, y2, color=ACCENT, linewidth=1.8)
+    ax2.set_title("Run Differential Distribution")
+    ax2.set_xlabel("Run Differential (Home − Away)")
+    ax2.set_ylabel("Density")
+    apply_dark(ax2, fig2)
 
     buf2 = io.BytesIO()
-    plt.savefig(buf2, format="png")
-    plt.close()
+    fig2.savefig(buf2, format="png", bbox_inches="tight")
+    plt.close(fig2)
     buf2.seek(0)
     run_image = base64.b64encode(buf2.getvalue()).decode("utf-8")
 

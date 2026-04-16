@@ -82,6 +82,7 @@ def get_team_last7_hitting_stats(season=2026):
         stat = split.get("stat", {})
         if team_id:
             result[team_id] = {
+                "avg": stat.get("avg"),
                 "runs": safe_int(stat.get("runs")),
             }
     return result

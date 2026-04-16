@@ -14,6 +14,7 @@ class Team(models.Model):
     streak_length = models.IntegerField(null=True, blank=True)
 
     # Last 7 days hitting
+    last7_avg = models.CharField(max_length=8, null=True, blank=True)
     last7_runs = models.IntegerField(null=True, blank=True)
 
     # Season hitting

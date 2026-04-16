@@ -102,6 +102,7 @@ class Command(BaseCommand):
             last7_stats = get_team_last7_hitting_stats(season=2026)
             for team_id, stats in last7_stats.items():
                 Team.objects.filter(mlb_id=team_id).update(
+                    last7_avg=stats["avg"],
                     last7_runs=stats["runs"],
                 )
             self.stdout.write(
