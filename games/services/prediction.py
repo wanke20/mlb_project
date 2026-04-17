@@ -1,5 +1,5 @@
-import numpy as np
-from scipy.stats import beta, norm
+import math
+from statistics import NormalDist
 
 
 # -------------------
@@ -154,12 +154,15 @@ def predict_game(home_team, away_team, home_pitcher, away_pitcher):
         + B_ERA * era_diff
     )
 
-    prior_p = 1 / (1 + np.exp(-logit_p))
+    prior_p = 1 / (1 + math.exp(-logit_p))
     alpha = prior_p * effective_prior
     beta_param = (1 - prior_p) * effective_prior
 
     mean = alpha / (alpha + beta_param)
-    ci_low, ci_high = beta.ppf([0.05, 0.95], alpha, beta_param)
+    # Normal approximation to Beta(alpha, beta_param) — accurate when both > 2
+    beta_std = math.sqrt(alpha * beta_param / ((alpha + beta_param) ** 2 * (alpha + beta_param + 1)))
+    beta_dist = NormalDist(mean, beta_std)
+    ci_low, ci_high = beta_dist.inv_cdf(0.05), beta_dist.inv_cdf(0.95)
 
     # ---- Run differential ----
     mu = (
@@ -169,13 +172,15 @@ def predict_game(home_team, away_team, home_pitcher, away_pitcher):
         + W_ERA * era_diff
     )
 
-    run_ci_low, run_ci_high = norm.ppf([0.025, 0.975], mu, SIGMA_RUNS)
+    run_dist = NormalDist(mu, SIGMA_RUNS)
+    run_ci_low, run_ci_high = run_dist.inv_cdf(0.025), run_dist.inv_cdf(0.975)
 
     # ---- Run total ----
     home_rpg = estimate_team_rpg(home_team)
     away_rpg = estimate_team_rpg(away_team)
     expected_total = home_rpg + away_rpg
-    total_ci_low, total_ci_high = norm.ppf([0.025, 0.975], expected_total, SIGMA_TOTAL)
+    total_dist = NormalDist(expected_total, SIGMA_TOTAL)
+    total_ci_low, total_ci_high = total_dist.inv_cdf(0.025), total_dist.inv_cdf(0.975)
 
     return {
         "win_probability": round(mean, 3),
