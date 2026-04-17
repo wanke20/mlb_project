@@ -29,9 +29,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*!z(s#_^f^60!4dvprge^n-k9r0pct_0(r0*(%=cgou)yx5inh'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Local dev: set `DEBUG=True` in `.env`.
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]  # tighten later
 
 
 # Application definition
@@ -130,18 +131,25 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-DEBUG = os.environ.get("DEBUG", "False") == "True"
-
-ALLOWED_HOSTS = ["*"]  # tighten later
-
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+if DEBUG:
+    # Dev-friendly: serve `static/` directly without needing `collectstatic`.
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    # Production: cache-busting hashed filenames served by WhiteNoise.
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# Only needed when DEBUG=False; harmless either way, and avoids surprises if DEBUG is toggled.
+WHITENOISE_USE_FINDERS = DEBUG
+
+# Keep original filenames after `collectstatic` so `/static/logos/ari.png` works
+# even when WhiteNoise is configured to also serve hashed files.
+WHITENOISE_KEEP_ONLY_HASHED_FILES = False

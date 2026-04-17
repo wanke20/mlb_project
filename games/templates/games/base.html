@@ -6,18 +6,18 @@
     <title>{% block title %}MLB Predictions{% endblock %}</title>
     <style>
         :root {
-            --bg:            #0d1117;
-            --surface:       #161b22;
-            --surface-hover: #1c2128;
-            --border:        #30363d;
-            --header-bg:     #010409;
-            --text:          #e6edf3;
-            --text-muted:    #8b949e;
-            --accent:        #58a6ff;
-            --accent-hover:  #79b8ff;
-            --green:         #3fb950;
-            --red:           #f85149;
-            --orange:        #d29922;
+            --bg:            #1e1e2e;
+            --surface:       #27273a;
+            --surface-hover: #313145;
+            --border:        #45475a;
+            --header-bg:     #181825;
+            --text:          #cdd6f4;
+            --text-muted:    #7f849c;
+            --accent:        #89b4fa;
+            --accent-hover:  #b4d0fb;
+            --green:         #a6e3a1;
+            --red:           #f38ba8;
+            --orange:        #fab387;
         }
 
         * {
@@ -212,12 +212,13 @@
 
         /* ---- Charts ---- */
         .chart-block {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
+            background: linear-gradient(160deg, #2e2e45 0%, #27273a 100%);
+            border: 1px solid rgba(137, 180, 250, 0.12);
+            border-radius: 12px;
+            padding: 24px;
             display: inline-block;
             margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
         }
 
         .chart-block img {

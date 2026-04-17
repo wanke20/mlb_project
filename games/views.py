@@ -48,12 +48,12 @@ def game_prediction(request, game_id):
         game.away_pitcher,
     )
 
-    BG      = "#161b22"
-    SURFACE = "#0d1117"
-    TEXT    = "#e6edf3"
-    MUTED   = "#8b949e"
-    ACCENT  = "#58a6ff"
-    GRID    = "#30363d"
+    BG      = "#27273a"
+    SURFACE = "#1e1e2e"
+    TEXT    = "#cdd6f4"
+    MUTED   = "#7f849c"
+    ACCENT  = "#89b4fa"
+    GRID    = "#45475a"
 
     def apply_dark(ax, fig):
         fig.patch.set_facecolor(BG)
@@ -113,10 +113,33 @@ def game_prediction(request, game_id):
     buf2.seek(0)
     run_image = base64.b64encode(buf2.getvalue()).decode("utf-8")
 
+    # ------------------------
+    # Run Total Distribution
+    # ------------------------
+    mu_total = prediction["expected_total"]
+    sigma_total = 3.0
+
+    x3 = np.linspace(mu_total - 4*sigma_total, mu_total + 4*sigma_total, 400)
+    y3 = norm.pdf(x3, mu_total, sigma_total)
+
+    fig3, ax3 = plt.subplots()
+    ax3.plot(x3, y3, color="#a6e3a1", linewidth=1.8)
+    ax3.set_title("Run Total Distribution")
+    ax3.set_xlabel("Total Runs (Both Teams)")
+    ax3.set_ylabel("Density")
+    apply_dark(ax3, fig3)
+
+    buf3 = io.BytesIO()
+    fig3.savefig(buf3, format="png", bbox_inches="tight")
+    plt.close(fig3)
+    buf3.seek(0)
+    total_image = base64.b64encode(buf3.getvalue()).decode("utf-8")
+
     context = {
         "game": game,
         "win_image": win_image,
         "run_image": run_image,
+        "total_image": total_image,
         "prediction": prediction,
     }
 

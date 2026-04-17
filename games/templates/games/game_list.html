@@ -1,9 +1,12 @@
 {% extends "games/base.html" %}
+{% load static %}
+{% load team_logos %}
 
 {% block title %}Today's Games{% endblock %}
 
 {% block content %}
 {% load tz %}
+{% get_static_prefix as STATIC_PREFIX %}
 
 <style>
     .page-header {
@@ -22,41 +25,38 @@
     }
 
     .game-card {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
+        background: linear-gradient(160deg, #2e2e45 0%, #27273a 100%);
+        border: 1px solid rgba(137, 180, 250, 0.12);
+        border-radius: 12px;
         padding: 20px;
         text-decoration: none;
         color: var(--text);
         display: block;
-        transition: border-color 0.15s, transform 0.1s;
-    }
-
-    .game-divider {
-        border: none;
-        border-top: 1px solid var(--border);
-        margin: 12px 0;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+        transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
     }
 
     .game-card:hover {
-        border-color: var(--accent);
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+        border-color: rgba(137, 180, 250, 0.4);
         text-decoration: none;
         color: var(--text);
     }
 
-    .game-time {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
+    .game-divider {
+        border: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.06);
+        margin: 12px 0;
     }
 
-    .game-matchup {
-        font-size: 17px;
-        font-weight: bold;
-        margin-bottom: 12px;
+    .game-time {
+        font-size: 11px;
+        color: var(--accent);
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        opacity: 0.8;
     }
 
     .game-record {
@@ -66,7 +66,42 @@
     }
 
     .game-pitcher {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 2px;
+    }
+
+    .matchup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .matchup-logo {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    .matchup-label {
+        font-size: 15px;
+        font-weight: bold;
+        color: var(--text);
+        text-align: center;
+        flex: 1;
+    }
+
+    .team-info {
         font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+
+    .pitcher-info {
+        font-size: 12px;
         color: var(--text-muted);
         margin-top: 2px;
     }
@@ -90,16 +125,33 @@
         {% endif %}
     </div>
 
-    <div class="game-matchup">
-        {{ game.away_team.name }} @ {{ game.home_team.name }}
+    <div class="matchup-header">
+        {% with away_abbr=game.away_team|logo_abbr %}
+        {% if away_abbr %}
+            {% with logo="logos/"|add:away_abbr|add:".png" %}
+                <img class="matchup-logo" src="{{ STATIC_PREFIX }}{{ logo }}" alt="{{ game.away_team.name }}">
+            {% endwith %}
+        {% else %}
+            <div class="matchup-logo"></div>
+        {% endif %}
+        {% endwith %}
+        <div class="matchup-label">{{ game.away_team.name }} @ {{ game.home_team.name }}</div>
+        {% with home_abbr=game.home_team|logo_abbr %}
+        {% if home_abbr %}
+            {% with logo="logos/"|add:home_abbr|add:".png" %}
+                <img class="matchup-logo" src="{{ STATIC_PREFIX }}{{ logo }}" alt="{{ game.home_team.name }}">
+            {% endwith %}
+        {% else %}
+            <div class="matchup-logo"></div>
+        {% endif %}
+        {% endwith %}
     </div>
 
-    <div class="game-record">
-        {{ game.away_team.name }}:
-        {{ game.away_team.wins }}-{{ game.away_team.losses }}
+    <div class="team-info">
+        {{ game.away_team.name }}: {{ game.away_team.wins }}-{{ game.away_team.losses }}
         (Last 10: {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }})
     </div>
-    <div class="game-pitcher">
+    <div class="pitcher-info">
         Away SP:
         {% if game.away_pitcher %}
             {{ game.away_pitcher.name }} ({{ game.away_pitcher.era|default:"—" }} ERA)
@@ -110,12 +162,11 @@
 
     <hr class="game-divider">
 
-    <div class="game-record">
-        {{ game.home_team.name }}:
-        {{ game.home_team.wins }}-{{ game.home_team.losses }}
+    <div class="team-info">
+        {{ game.home_team.name }}: {{ game.home_team.wins }}-{{ game.home_team.losses }}
         (Last 10: {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }})
     </div>
-    <div class="game-pitcher">
+    <div class="pitcher-info">
         Home SP:
         {% if game.home_pitcher %}
             {{ game.home_pitcher.name }} ({{ game.home_pitcher.era|default:"—" }} ERA)

@@ -62,6 +62,7 @@ class Command(BaseCommand):
                         mlb_id=team_id,
                         defaults={
                             "name": team_record["team"]["name"],
+                            "abbreviation": team_record["team"].get("abbreviation", "").lower(),
                             "wins": wins,
                             "losses": losses,
                             "win_pct": pct,
@@ -141,14 +142,24 @@ class Command(BaseCommand):
                     home_data = game["teams"]["home"]["team"]
                     away_data = game["teams"]["away"]["team"]
 
+                    home_defaults = {"name": home_data["name"]}
+                    home_abbr = (home_data.get("abbreviation") or "").strip()
+                    if home_abbr:
+                        home_defaults["abbreviation"] = home_abbr.lower()
+
                     home_team, _ = Team.objects.update_or_create(
                         mlb_id=home_data["id"],
-                        defaults={"name": home_data["name"]}
+                        defaults=home_defaults
                     )
+
+                    away_defaults = {"name": away_data["name"]}
+                    away_abbr = (away_data.get("abbreviation") or "").strip()
+                    if away_abbr:
+                        away_defaults["abbreviation"] = away_abbr.lower()
 
                     away_team, _ = Team.objects.update_or_create(
                         mlb_id=away_data["id"],
-                        defaults={"name": away_data["name"]}
+                        defaults=away_defaults
                     )
 
                     # -----------------------

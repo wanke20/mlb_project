@@ -3,9 +3,83 @@
 {% block title %}{{ game.away_team.name }} @ {{ game.home_team.name }}{% endblock %}
 
 {% block content %}
+<style>
+    /* Section headers with left accent bar */
+    .section-heading {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        border-left: 3px solid var(--accent);
+        padding-left: 10px;
+        margin: 32px 0 14px;
+    }
+
+    /* Away / Home row differentiation */
+    tr.away-row td:first-child {
+        border-left: 3px solid var(--accent);
+    }
+
+    tr.home-row td:first-child {
+        border-left: 3px solid var(--green);
+    }
+
+    /* Team label badges */
+    .team-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-left: 6px;
+        vertical-align: middle;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .badge-away {
+        background: rgba(137, 180, 250, 0.15);
+        color: var(--accent);
+    }
+
+    .badge-home {
+        background: rgba(166, 227, 161, 0.15);
+        color: var(--green);
+    }
+
+    /* ERA color coding */
+    .era-elite  { color: #a6e3a1; font-weight: 600; }  /* < 3.00 */
+    .era-good   { color: #94d8a0; }                     /* 3.00–3.99 */
+    .era-avg    { color: var(--text); }                  /* 4.00–4.99 */
+    .era-poor   { color: var(--orange); }                /* 5.00–5.99 */
+    .era-bad    { color: var(--red); font-weight: 600; } /* 6.00+ */
+
+    /* Chart block stat values */
+    .stat-value-win-high { color: var(--green);  font-size: 28px; font-weight: bold; }
+    .stat-value-win-low  { color: var(--red);    font-size: 28px; font-weight: bold; }
+    .stat-value-win-mid  { color: var(--accent); font-size: 28px; font-weight: bold; }
+    .stat-value-pos      { color: var(--green);  font-size: 28px; font-weight: bold; }
+    .stat-value-neg      { color: var(--red);    font-size: 28px; font-weight: bold; }
+    .stat-value-total    { color: var(--orange); font-size: 28px; font-weight: bold; }
+
+    .ci-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+    }
+
+    .charts-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: flex-start;
+    }
+</style>
+
 <h1>{{ game.away_team.name }} @ {{ game.home_team.name }}</h1>
 
-<h2>Matchup Summary</h2>
+<div class="section-heading">Matchup Summary</div>
 <table>
     <thead>
         <tr>
@@ -22,8 +96,11 @@
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>{{ game.away_team.name }} <span style="color:var(--text-muted)">(Away)</span></td>
+        <tr class="away-row">
+            <td>
+                {{ game.away_team.name }}
+                <span class="team-badge badge-away">Away</span>
+            </td>
             <td>
                 {% if game.away_team.wins is not None and game.away_team.losses is not None %}
                     {{ game.away_team.wins }}-{{ game.away_team.losses }}
@@ -44,14 +121,33 @@
             </td>
             <td>{{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }}</td>
             <td>{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
-            <td>{% if game.away_pitcher and game.away_pitcher.era is not None %}{{ game.away_pitcher.era }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>
+                {% if game.away_pitcher and game.away_pitcher.era is not None %}
+                    {% if game.away_pitcher.era < 3.0 %}
+                        <span class="era-elite">{{ game.away_pitcher.era }}</span>
+                    {% elif game.away_pitcher.era < 4.0 %}
+                        <span class="era-good">{{ game.away_pitcher.era }}</span>
+                    {% elif game.away_pitcher.era < 5.0 %}
+                        <span class="era-avg">{{ game.away_pitcher.era }}</span>
+                    {% elif game.away_pitcher.era < 6.0 %}
+                        <span class="era-poor">{{ game.away_pitcher.era }}</span>
+                    {% else %}
+                        <span class="era-bad">{{ game.away_pitcher.era }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="na">—</span>
+                {% endif %}
+            </td>
             <td>{% if game.away_pitcher and game.away_pitcher.whip is not None %}{{ game.away_pitcher.whip }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.away_pitcher and game.away_pitcher.strikeouts is not None %}{{ game.away_pitcher.strikeouts }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.away_pitcher and game.away_pitcher.walks is not None %}{{ game.away_pitcher.walks }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.away_pitcher and game.away_pitcher.innings_pitched %}{{ game.away_pitcher.innings_pitched }}{% else %}<span class="na">—</span>{% endif %}</td>
         </tr>
-        <tr>
-            <td>{{ game.home_team.name }} <span style="color:var(--text-muted)">(Home)</span></td>
+        <tr class="home-row">
+            <td>
+                {{ game.home_team.name }}
+                <span class="team-badge badge-home">Home</span>
+            </td>
             <td>
                 {% if game.home_team.wins is not None and game.home_team.losses is not None %}
                     {{ game.home_team.wins }}-{{ game.home_team.losses }}
@@ -72,7 +168,23 @@
             </td>
             <td>{{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }}</td>
             <td>{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
-            <td>{% if game.home_pitcher and game.home_pitcher.era is not None %}{{ game.home_pitcher.era }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>
+                {% if game.home_pitcher and game.home_pitcher.era is not None %}
+                    {% if game.home_pitcher.era < 3.0 %}
+                        <span class="era-elite">{{ game.home_pitcher.era }}</span>
+                    {% elif game.home_pitcher.era < 4.0 %}
+                        <span class="era-good">{{ game.home_pitcher.era }}</span>
+                    {% elif game.home_pitcher.era < 5.0 %}
+                        <span class="era-avg">{{ game.home_pitcher.era }}</span>
+                    {% elif game.home_pitcher.era < 6.0 %}
+                        <span class="era-poor">{{ game.home_pitcher.era }}</span>
+                    {% else %}
+                        <span class="era-bad">{{ game.home_pitcher.era }}</span>
+                    {% endif %}
+                {% else %}
+                    <span class="na">—</span>
+                {% endif %}
+            </td>
             <td>{% if game.home_pitcher and game.home_pitcher.whip is not None %}{{ game.home_pitcher.whip }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.home_pitcher and game.home_pitcher.strikeouts is not None %}{{ game.home_pitcher.strikeouts }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.home_pitcher and game.home_pitcher.walks is not None %}{{ game.home_pitcher.walks }}{% else %}<span class="na">—</span>{% endif %}</td>
@@ -81,21 +193,42 @@
     </tbody>
 </table>
 
-<h2>Win Probability</h2>
-<div class="chart-block">
-    <div class="stat-label">Home win probability</div>
-    <div class="stat-value">{{ prediction.win_probability }}</div>
-    <div class="stat-label" style="margin-top:6px">90% CI: {{ prediction.win_ci.0 }} – {{ prediction.win_ci.1 }}</div>
-    <br>
-    <img src="data:image/png;base64,{{ win_image }}" />
-</div>
+<div class="section-heading">Predictions</div>
+<div class="charts-row">
 
-<h2>Run Differential</h2>
-<div class="chart-block">
-    <div class="stat-label">Expected run differential (Home − Away)</div>
-    <div class="stat-value">{{ prediction.expected_run_diff }}</div>
-    <div class="stat-label" style="margin-top:6px">95% CI: {{ prediction.run_ci.0 }} – {{ prediction.run_ci.1 }}</div>
-    <br>
-    <img src="data:image/png;base64,{{ run_image }}" />
+    <div class="chart-block">
+        <div class="stat-label">Home win probability</div>
+        {% if prediction.win_probability >= 0.60 %}
+            <div class="stat-value-win-high">{{ prediction.win_probability }}</div>
+        {% elif prediction.win_probability <= 0.40 %}
+            <div class="stat-value-win-low">{{ prediction.win_probability }}</div>
+        {% else %}
+            <div class="stat-value-win-mid">{{ prediction.win_probability }}</div>
+        {% endif %}
+        <div class="ci-label">90% CI: {{ prediction.win_ci.0 }} – {{ prediction.win_ci.1 }}</div>
+        <br>
+        <img src="data:image/png;base64,{{ win_image }}" />
+    </div>
+
+    <div class="chart-block">
+        <div class="stat-label">Expected run differential (Home − Away)</div>
+        {% if prediction.expected_run_diff >= 0 %}
+            <div class="stat-value-pos">+{{ prediction.expected_run_diff }}</div>
+        {% else %}
+            <div class="stat-value-neg">{{ prediction.expected_run_diff }}</div>
+        {% endif %}
+        <div class="ci-label">95% CI: {{ prediction.run_ci.0 }} – {{ prediction.run_ci.1 }}</div>
+        <br>
+        <img src="data:image/png;base64,{{ run_image }}" />
+    </div>
+
+    <div class="chart-block">
+        <div class="stat-label">Expected total runs (both teams)</div>
+        <div class="stat-value-total">{{ prediction.expected_total }}</div>
+        <div class="ci-label">95% CI: {{ prediction.total_ci.0 }} – {{ prediction.total_ci.1 }}</div>
+        <br>
+        <img src="data:image/png;base64,{{ total_image }}" />
+    </div>
+
 </div>
 {% endblock %}

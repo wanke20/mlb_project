@@ -9,6 +9,8 @@ class Team(models.Model):
     last10_wins = models.IntegerField(default=0)
     last10_losses = models.IntegerField(default=0)
 
+    abbreviation = models.CharField(max_length=5, null=True, blank=True)
+
     # Streak
     streak_type = models.CharField(max_length=1, null=True, blank=True)  # 'W' or 'L'
     streak_length = models.IntegerField(null=True, blank=True)

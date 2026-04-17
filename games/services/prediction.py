@@ -21,6 +21,20 @@ SIGMA_RUNS = 2.5
 LEAGUE_AVG_ERA = 4.50   # Prior mean: regress unknown pitchers to league average
 IP_PRIOR = 30           # Pseudo-innings for prior; confidence = 0.5 at this many IP
 
+# Run total model constants
+LEAGUE_AVG_RPG = 4.50   # League-average runs per game per team
+LEAGUE_AVG_OPS = 0.720  # League-average OPS
+LEAGUE_AVG_AVG = 0.248  # League-average batting average
+SIGMA_TOTAL    = 3.0    # Std dev for total run distribution
+
+# Weights for run total estimate (must sum to 1.0)
+# Season metrics weighted higher than recent form
+WT_SEASON_RPG = 0.40
+WT_SEASON_OPS = 0.30
+WT_SEASON_AVG = 0.15
+WT_LAST7_RPG  = 0.10
+WT_LAST7_AVG  = 0.05
+
 
 def parse_record(record_str):
     wins, losses = map(int, record_str.split("-"))
@@ -80,6 +94,34 @@ def effective_pitcher_era(pitcher):
     return blended_era, conf
 
 
+def estimate_team_rpg(team):
+    """Estimate a team's expected runs per game using a weighted blend of
+    season and recent hitting metrics, each normalised to league average.
+
+    Season stats (RPG, OPS, AVG) carry 85% of the weight; last-7-day
+    stats carry the remaining 15%, so recent hot/cold streaks nudge the
+    estimate without dominating it.  Missing stats fall back to league
+    average so the model degrades gracefully early in the season.
+    """
+    games = max((team.wins or 0) + (team.losses or 0), 1)
+
+    season_rpg = (team.season_runs / games) if team.season_runs else LEAGUE_AVG_RPG
+    ops        = float(team.season_ops)  if team.season_ops  else LEAGUE_AVG_OPS
+    avg        = float(team.season_avg)  if team.season_avg  else LEAGUE_AVG_AVG
+    last7_rpg  = (team.last7_runs / 7)   if team.last7_runs  else LEAGUE_AVG_RPG
+    last7_avg  = float(team.last7_avg)   if team.last7_avg   else LEAGUE_AVG_AVG
+
+    # Express each metric as a ratio to league average, then blend
+    rpg = LEAGUE_AVG_RPG * (
+        WT_SEASON_RPG * (season_rpg / LEAGUE_AVG_RPG)
+        + WT_SEASON_OPS * (ops       / LEAGUE_AVG_OPS)
+        + WT_SEASON_AVG * (avg       / LEAGUE_AVG_AVG)
+        + WT_LAST7_RPG  * (last7_rpg / LEAGUE_AVG_RPG)
+        + WT_LAST7_AVG  * (last7_avg / LEAGUE_AVG_AVG)
+    )
+    return rpg
+
+
 def predict_game(home_team, away_team, home_pitcher, away_pitcher):
     """
     Accepts Django model instances.
@@ -129,9 +171,17 @@ def predict_game(home_team, away_team, home_pitcher, away_pitcher):
 
     run_ci_low, run_ci_high = norm.ppf([0.025, 0.975], mu, SIGMA_RUNS)
 
+    # ---- Run total ----
+    home_rpg = estimate_team_rpg(home_team)
+    away_rpg = estimate_team_rpg(away_team)
+    expected_total = home_rpg + away_rpg
+    total_ci_low, total_ci_high = norm.ppf([0.025, 0.975], expected_total, SIGMA_TOTAL)
+
     return {
         "win_probability": round(mean, 3),
         "win_ci": [round(ci_low, 3), round(ci_high, 3)],
         "expected_run_diff": round(mu, 2),
         "run_ci": [round(run_ci_low, 2), round(run_ci_high, 2)],
+        "expected_total": round(expected_total, 2),
+        "total_ci": [round(total_ci_low, 2), round(total_ci_high, 2)],
     }
