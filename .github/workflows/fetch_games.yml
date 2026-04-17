@@ -1,0 +1,34 @@
+name: Fetch Games
+
+on:
+  schedule:
+    - cron: '0 3  * * *'   # 3 AM UTC  (11 PM EDT)
+    - cron: '0 9  * * *'   # 9 AM UTC  (5 AM EDT)
+    - cron: '0 15 * * *'   # 3 PM UTC  (11 AM EDT)
+  workflow_dispatch:      # Allows manual run
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run fetch_games command
+        env:
+            DATABASE_USER: ${{ secrets.DATABASE_USER }}
+            DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+            HOST: ${{ secrets.HOST }}
+            DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        run: |
+            python manage.py fetch_games

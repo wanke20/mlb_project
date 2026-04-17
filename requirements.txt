@@ -1,7 +1,10 @@
 Django
 gunicorn
-mysqlclient
+psycopg2-binary
 dj-database-url
 whitenoise
 python-dotenv
+numpy
+matplotlib
+scipy
 requests

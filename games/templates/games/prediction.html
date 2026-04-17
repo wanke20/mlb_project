@@ -207,7 +207,7 @@
         {% endif %}
         <div class="ci-label">90% CI: {{ prediction.win_ci.0 }} – {{ prediction.win_ci.1 }}</div>
         <br>
-        <canvas id="winChart" width="400" height="220"></canvas>
+        <img src="data:image/png;base64,{{ win_image }}" />
     </div>
 
     <div class="chart-block">
@@ -219,7 +219,7 @@
         {% endif %}
         <div class="ci-label">95% CI: {{ prediction.run_ci.0 }} – {{ prediction.run_ci.1 }}</div>
         <br>
-        <canvas id="runChart" width="400" height="220"></canvas>
+        <img src="data:image/png;base64,{{ run_image }}" />
     </div>
 
     <div class="chart-block">
@@ -227,46 +227,8 @@
         <div class="stat-value-total">{{ prediction.expected_total }}</div>
         <div class="ci-label">95% CI: {{ prediction.total_ci.0 }} – {{ prediction.total_ci.1 }}</div>
         <br>
-        <canvas id="totalChart" width="400" height="220"></canvas>
+        <img src="data:image/png;base64,{{ total_image }}" />
     </div>
 
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
-<script>
-const CHART_DEFAULTS = {
-    type: 'scatter',
-    options: {
-        animation: false,
-        responsive: false,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { ticks: { color: '#7f849c', maxTicksLimit: 6 }, grid: { color: '#45475a' } },
-            y: { ticks: { color: '#7f849c', maxTicksLimit: 5 }, grid: { color: '#45475a' } },
-        }
-    }
-};
-
-function makeChart(id, data, color) {
-    new Chart(document.getElementById(id), {
-        ...CHART_DEFAULTS,
-        data: {
-            datasets: [{
-                data: data,
-                showLine: true,
-                borderColor: color,
-                borderWidth: 2,
-                backgroundColor: color.replace(')', ', 0.15)').replace('rgb', 'rgba'),
-                fill: true,
-                pointRadius: 0,
-                tension: 0.4,
-            }]
-        }
-    });
-}
-
-makeChart('winChart',   {{ win_chart|safe }},   '#89b4fa');
-makeChart('runChart',   {{ run_chart|safe }},   '#89b4fa');
-makeChart('totalChart', {{ total_chart|safe }}, '#a6e3a1');
-</script>
 {% endblock %}
