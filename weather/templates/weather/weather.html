@@ -1,0 +1,54 @@
+{% extends "games/base.html" %}
+{% load tz %}
+
+{% block title %}Weather{% endblock %}
+
+{% block content %}
+<h1>Game Day Weather</h1>
+<p class="subtitle">Rain probability at first pitch for today's games (UTC times shown)</p>
+
+{% if game_weather %}
+<table>
+    <thead>
+        <tr>
+            <th>Matchup</th>
+            <th>First Pitch (UTC)</th>
+            <th>Rain Probability</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in game_weather %}
+        <tr>
+            <td>{{ entry.game.away_team.name }} @ {{ entry.game.home_team.name }}</td>
+            <td>
+                {% if entry.game.start_time_utc %}
+                    {{ entry.game.start_time_utc|date:"g:i A" }} UTC
+                {% else %}
+                    <span class="na">TBD</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if entry.has_roof %}
+                    <span class="na">Dome / Roof</span>
+                {% elif entry.unknown %}
+                    <span class="na">—</span>
+                {% elif entry.rain_pct is None %}
+                    <span class="na">—</span>
+                {% elif entry.rain_pct >= 70 %}
+                    <span style="color: var(--red); font-weight: 600;">{{ entry.rain_pct }}%</span>
+                {% elif entry.rain_pct >= 40 %}
+                    <span style="color: var(--orange); font-weight: 600;">{{ entry.rain_pct }}%</span>
+                {% elif entry.rain_pct >= 20 %}
+                    <span style="color: #f9e2af; font-weight: 600;">{{ entry.rain_pct }}%</span>
+                {% else %}
+                    <span style="color: var(--green); font-weight: 600;">{{ entry.rain_pct }}%</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>No games scheduled for today.</p>
+{% endif %}
+{% endblock %}

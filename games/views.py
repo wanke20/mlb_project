@@ -6,7 +6,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.db.models import F
 from .models import Game, Team
-from games.services.prediction import predict_game
+from games.services.prediction import predict_game, effective_pitcher_era
 
 
 def _linspace(start, stop, n):
@@ -67,6 +67,20 @@ def game_prediction(request, game_id):
     x_total = _linspace(mu_total - 4 * sigma_total, mu_total + 4 * sigma_total, 200)
     y_total = [total_dist.pdf(x) for x in x_total]
 
+    # ERA posteriors — uncertainty shrinks as innings pitched grows
+    home_era_val, home_conf = effective_pitcher_era(game.home_pitcher)
+    away_era_val, away_conf = effective_pitcher_era(game.away_pitcher)
+
+    def era_std(conf):
+        return 1.5 * (1 - conf) + 0.3 * conf
+
+    home_era_dist = NormalDist(home_era_val, era_std(home_conf))
+    away_era_dist = NormalDist(away_era_val, era_std(away_conf))
+
+    era_min = max(min(home_era_val - 4 * era_std(home_conf), away_era_val - 4 * era_std(away_conf)), 0)
+    era_max = min(max(home_era_val + 4 * era_std(home_conf), away_era_val + 4 * era_std(away_conf)), 12)
+    x_era = _linspace(era_min, era_max, 200)
+
     def chart_json(xs, ys):
         return json.dumps([{"x": round(x, 4), "y": round(y, 4)} for x, y in zip(xs, ys)])
 
@@ -76,6 +90,10 @@ def game_prediction(request, game_id):
         "win_chart": chart_json(x_win, y_win),
         "run_chart": chart_json(x_run, y_run),
         "total_chart": chart_json(x_total, y_total),
+        "home_era_chart": chart_json(x_era, [home_era_dist.pdf(x) for x in x_era]),
+        "away_era_chart": chart_json(x_era, [away_era_dist.pdf(x) for x in x_era]),
+        "home_pitcher_name": game.home_pitcher.name if game.home_pitcher else "TBA",
+        "away_pitcher_name": game.away_pitcher.name if game.away_pitcher else "TBA",
     }
 
     return render(request, "games/prediction.html", context)
