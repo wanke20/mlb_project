@@ -45,7 +45,7 @@ def get_rain_probability(lat, lon, game_time_utc):
                 "hourly": "precipitation_probability",
                 "timezone": "UTC",
                 "past_days": 1,
-                "forecast_days": 2,
+                "forecast_days": 3,
             },
             timeout=5,
         )
