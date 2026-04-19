@@ -1,9 +1,10 @@
+import time
+import logging
 from django.core.management.base import BaseCommand
 from games.models import Game
 from weather.models import WeatherData
 from weather.services import STADIUM_COORDS, get_rain_probability
 
-import logging
 logger = logging.getLogger(__name__)
 
 
@@ -36,5 +37,6 @@ class Command(BaseCommand):
                 },
             )
             updated += 1
+            time.sleep(0.5)
 
         self.stdout.write(self.style.SUCCESS(f"Fetched weather for {updated} games."))

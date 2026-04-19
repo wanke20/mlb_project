@@ -1,4 +1,5 @@
 import logging
+import time
 import requests
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,7 @@ def get_rain_probability(lat, lon, game_time_utc):
             if attempt == 2:
                 logger.error(f"Open-Meteo timed out after 3 attempts for ({lat}, {lon})")
                 return None
+            time.sleep(2 ** attempt)  # 1s, 2s backoff
         except Exception as e:
             logger.error(f"Open-Meteo request failed for ({lat}, {lon}): {e}")
             return None
