@@ -1,6 +1,6 @@
 import logging
-import time
 import requests
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -38,56 +38,43 @@ STADIUM_COORDS = {
     158: (43.0280, -87.9712,  True),   # MIL
 }
 
+_HEADERS = {"User-Agent": "mlb-predictions-app github.com/wanke20/mlb_project"}
+
 
 def get_rain_probability(lat, lon, game_time_utc):
-    for attempt in range(3):
-        try:
-            resp = requests.get(
-                "https://api.open-meteo.com/v1/forecast",
-                params={
-                    "latitude": lat,
-                    "longitude": lon,
-                    "hourly": "precipitation_probability,precipitation",
-                    "timezone": "UTC",
-                    "past_days": 1,
-                    "forecast_days": 3,
-                },
-                timeout=30,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+    # Step 1: resolve NWS grid point
+    try:
+        resp = requests.get(
+            f"https://api.weather.gov/points/{lat},{lon}",
+            headers=_HEADERS,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        forecast_hourly_url = resp.json()["properties"]["forecastHourly"]
+    except Exception as e:
+        logger.error(f"NWS points lookup failed for ({lat}, {lon}): {e}")
+        return None
 
-            times = data["hourly"]["time"]
-            probs = data["hourly"]["precipitation_probability"]
-            precip = data["hourly"]["precipitation"]
+    # Step 2: get hourly forecast
+    try:
+        resp = requests.get(
+            forecast_hourly_url,
+            headers=_HEADERS,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        periods = resp.json()["properties"]["periods"]
+    except Exception as e:
+        logger.error(f"NWS hourly forecast failed for ({lat}, {lon}): {e}")
+        return None
 
-            target = game_time_utc.strftime("%Y-%m-%dT%H:00")
-            if target not in times:
-                logger.warning(f"Target hour {target} not found in forecast. Range: {times[0]} to {times[-1]}")
-                return None
+    # Find the period containing game_time_utc
+    for period in periods:
+        start = datetime.fromisoformat(period["startTime"])
+        end = datetime.fromisoformat(period["endTime"])
+        if start <= game_time_utc <= end:
+            prob = period["probabilityOfPrecipitation"]["value"]
+            return prob if prob is not None else 0
 
-            idx = times.index(target)
-
-            if probs[idx] is not None:
-                return probs[idx]
-
-            mm = precip[idx]
-            if mm is None:
-                return None
-            if mm == 0:
-                return 0
-            elif mm <= 1:
-                return 25
-            elif mm <= 5:
-                return 60
-            else:
-                return 90
-
-        except requests.exceptions.Timeout:
-            if attempt == 2:
-                logger.error(f"Open-Meteo timed out after 3 attempts for ({lat}, {lon})")
-                return None
-            time.sleep(5 * (attempt + 1))  # 5s, 10s backoff
-        except Exception as e:
-            logger.error(f"Open-Meteo request failed for ({lat}, {lon}): {e}")
-            return None
+    logger.warning(f"No NWS period found for {game_time_utc} at ({lat}, {lon})")
+    return None

@@ -1,8 +1,6 @@
 name: Fetch Weather
 
 on:
-  schedule:
-    - cron: '0 */2 * * *'  # Every 2 hours
   workflow_run:
     workflows: ["Fetch Games"]
     types: [completed]
