@@ -37,6 +37,6 @@ class Command(BaseCommand):
                 },
             )
             updated += 1
-            time.sleep(0.5)
+            time.sleep(1)
 
         self.stdout.write(self.style.SUCCESS(f"Fetched weather for {updated} games."))
