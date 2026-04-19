@@ -26,6 +26,7 @@ class Command(BaseCommand):
             rain_pct = None
             if not has_roof and game.start_time_utc:
                 rain_pct = get_rain_probability(lat, lon, game.start_time_utc)
+                self.stdout.write(f"  {game} | start_utc={game.start_time_utc} | rain_pct={rain_pct}")
 
             WeatherData.objects.update_or_create(
                 game=game,

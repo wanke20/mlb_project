@@ -1,4 +1,7 @@
+import logging
 import requests
+
+logger = logging.getLogger(__name__)
 
 # mlb_id: (lat, lon, has_roof)
 STADIUM_COORDS = {
@@ -42,7 +45,7 @@ def get_rain_probability(lat, lon, game_time_utc):
             params={
                 "latitude": lat,
                 "longitude": lon,
-                "hourly": "precipitation_probability",
+                "hourly": "precipitation_probability,precipitation",
                 "timezone": "UTC",
                 "past_days": 1,
                 "forecast_days": 3,
@@ -54,10 +57,32 @@ def get_rain_probability(lat, lon, game_time_utc):
 
         times = data["hourly"]["time"]
         probs = data["hourly"]["precipitation_probability"]
+        precip = data["hourly"]["precipitation"]
 
         target = game_time_utc.strftime("%Y-%m-%dT%H:00")
-        if target in times:
-            return probs[times.index(target)]
-        return None
-    except Exception:
+        if target not in times:
+            logger.warning(f"Target hour {target} not found in forecast. Range: {times[0]} to {times[-1]}")
+            return None
+
+        idx = times.index(target)
+
+        # Forecast probability available for future hours
+        if probs[idx] is not None:
+            return probs[idx]
+
+        # Fall back to actual precipitation (mm) for past hours
+        mm = precip[idx]
+        if mm is None:
+            return None
+        if mm == 0:
+            return 0
+        elif mm <= 1:
+            return 25
+        elif mm <= 5:
+            return 60
+        else:
+            return 90
+
+    except Exception as e:
+        logger.error(f"Open-Meteo request failed for ({lat}, {lon}): {e}")
         return None
