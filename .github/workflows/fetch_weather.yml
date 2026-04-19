@@ -1,14 +1,15 @@
-name: Fetch Games
+name: Fetch Weather
 
 on:
   schedule:
-    - cron: '0 3  * * *'   # 3 AM UTC  (11 PM EDT)
-    - cron: '0 9  * * *'   # 9 AM UTC  (5 AM EDT)
-    - cron: '0 15 * * *'   # 3 PM UTC  (11 AM EDT)
-  workflow_dispatch:      # Allows manual run
+    - cron: '0 */2 * * *'  # Every 2 hours
+  workflow_run:
+    workflows: ["Fetch Games"]
+    types: [completed]
+  workflow_dispatch:
 
 jobs:
-  fetch:
+  weather:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,12 +25,11 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Run fetch_games command
+      - name: Run fetch_weather command
         env:
             DATABASE_USER: ${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
             HOST: ${{ secrets.HOST }}
             DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         run: |
-            python manage.py fetch_games
-
+            python manage.py fetch_weather
