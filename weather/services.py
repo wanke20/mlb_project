@@ -52,7 +52,7 @@ def get_rain_probability(lat, lon, game_time_utc):
                     "past_days": 1,
                     "forecast_days": 3,
                 },
-                timeout=15,
+                timeout=30,
             )
             resp.raise_for_status()
             data = resp.json()
@@ -87,7 +87,7 @@ def get_rain_probability(lat, lon, game_time_utc):
             if attempt == 2:
                 logger.error(f"Open-Meteo timed out after 3 attempts for ({lat}, {lon})")
                 return None
-            time.sleep(2 ** attempt)  # 1s, 2s backoff
+            time.sleep(5 * (attempt + 1))  # 5s, 10s backoff
         except Exception as e:
             logger.error(f"Open-Meteo request failed for ({lat}, {lon}): {e}")
             return None
