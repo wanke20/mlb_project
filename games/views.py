@@ -1,10 +1,12 @@
+import csv
 import json
 import math
 from statistics import NormalDist
 
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.db.models import F
+from django.utils import timezone
 from .models import Game, Team
 from games.services.prediction import predict_game, effective_pitcher_era
 
@@ -97,3 +99,69 @@ def game_prediction(request, game_id):
     }
 
     return render(request, "games/prediction.html", context)
+
+
+def export_csv(request):
+    games = Game.objects.select_related(
+        "home_team", "away_team", "home_pitcher", "away_pitcher"
+    ).order_by(F("start_time_utc").asc(nulls_last=True))
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="mlb_export_{timezone.now().strftime("%Y-%m-%d")}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "date", "start_time_et",
+        "away_team", "home_team",
+        "away_record", "home_record",
+        "away_last10", "home_last10",
+        "away_streak", "home_streak",
+        "away_win_pct", "home_win_pct",
+        "away_season_avg", "home_season_avg",
+        "away_season_ops", "home_season_ops",
+        "away_pitcher", "home_pitcher",
+        "away_era", "home_era",
+        "away_whip", "home_whip",
+        "away_strikeouts", "home_strikeouts",
+        "away_innings_pitched", "home_innings_pitched",
+        "rain_pct", "has_roof",
+    ])
+
+    eastern = timezone.get_fixed_timezone(-240)  # EDT (UTC-4); close enough for display
+
+    for game in games:
+        start_et = game.start_time_utc.astimezone(eastern).strftime("%Y-%m-%d %I:%M %p") if game.start_time_utc else ""
+
+        away, home = game.away_team, game.home_team
+        ap, hp = game.away_pitcher, game.home_pitcher
+
+        try:
+            w = game.weather
+            rain_pct = w.rain_pct
+            has_roof = "Yes" if w.has_roof else "No"
+        except Exception:
+            rain_pct = ""
+            has_roof = ""
+
+        writer.writerow([
+            game.date,
+            start_et,
+            away.name, home.name,
+            f"{away.wins}-{away.losses}" if away.wins is not None else "",
+            f"{home.wins}-{home.losses}" if home.wins is not None else "",
+            f"{away.last10_wins}-{away.last10_losses}",
+            f"{home.last10_wins}-{home.last10_losses}",
+            f"{away.streak_type}{away.streak_length}" if away.streak_type else "",
+            f"{home.streak_type}{home.streak_length}" if home.streak_type else "",
+            away.win_pct, home.win_pct,
+            away.season_avg, home.season_avg,
+            away.season_ops, home.season_ops,
+            ap.name if ap else "", hp.name if hp else "",
+            ap.era if ap else "", hp.era if hp else "",
+            ap.whip if ap else "", hp.whip if hp else "",
+            ap.strikeouts if ap else "", hp.strikeouts if hp else "",
+            ap.innings_pitched if ap else "", hp.innings_pitched if hp else "",
+            rain_pct, has_roof,
+        ])
+
+    return response
