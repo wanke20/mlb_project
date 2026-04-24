@@ -13,8 +13,9 @@
             --header-bg:     #181825;
             --text:          #cdd6f4;
             --text-muted:    #7f849c;
-            --accent:        #89b4fa;
-            --accent-hover:  #b4d0fb;
+            --accent:         #89b4fa;
+            --accent-hover:   #b4d0fb;
+            --accent-surface: rgba(137, 180, 250, 0.08);
             --green:         #a6e3a1;
             --red:           #f38ba8;
             --orange:        #fab387;
@@ -241,7 +242,7 @@
 
 {% load tz %}
 <nav>
-    <a class="brand" href="{% url 'home_page' %}">⚾ MLB Predictions</a>
+    <a class="brand" href="{% url 'home_page' %}">MLB Predictions</a>
     <a href="{% url 'game_list' %}">Games</a>
     <a href="{% url 'trends' %}">Trends</a>
     <a href="{% url 'weather' %}">Weather</a>

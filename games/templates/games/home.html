@@ -27,7 +27,7 @@
     }
 
     .nav-card {
-        background: var(--surface);
+        background: var(--accent-surface);
         border: 1px solid var(--border);
         border-radius: 10px;
         padding: 24px 28px;
@@ -99,7 +99,7 @@
 </style>
 
 <div class="hero">
-    <h1>⚾ MLB Prediction Model</h1>
+    <h1>MLB Prediction Model</h1>
     <p>Predicts MLB game outcomes using Bayesian statistics and live data from the MLB Stats API.</p>
 </div>
 
@@ -113,6 +113,11 @@
         <div class="nav-icon">📈</div>
         <div class="nav-title">Team Trends</div>
         <div class="nav-desc">Browse team streaks, last 7-day hitting stats, and full season averages.</div>
+    </a>
+    <a class="nav-card" href="{% url 'weather' %}">
+        <div class="nav-icon">⛅</div>
+        <div class="nav-title">Weather</div>
+        <div class="nav-desc">Check rain probability and weather conditions for today's games.</div>
     </a>
 </div>
 
