@@ -6,7 +6,7 @@ from games.services.mlb_api import (
     get_schedule, get_pitcher_stats, get_standings,
     get_team_season_hitting_stats, get_team_last7_hitting_stats,
 )
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 import logging
 logger = logging.getLogger(__name__)
@@ -113,21 +113,25 @@ class Command(BaseCommand):
             logger.error(f"Failed to fetch last-7-day hitting stats: {e}")
 
         # -----------------------
-        # Step 4: Update games and probable pitchers
+        # Step 4: Update games and probable pitchers (today + tomorrow)
         # -----------------------
-        try:
-            data = get_schedule(game_date=date.today().strftime("%Y-%m-%d"))
-        except Exception as e:
-            logger.error(f"Failed to fetch schedule: {e}")
-            return
-        
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
+        fetch_dates = [today, tomorrow]
         total_games = 0
 
         with transaction.atomic():
-            deleted_games, _ = Game.objects.all().delete()
+            deleted_games, _ = Game.objects.filter(date__in=fetch_dates).delete()
             self.stdout.write(
                 self.style.WARNING(f"Removed {deleted_games} existing games before refresh.")
             )
+
+        for fetch_date in fetch_dates:
+            try:
+                data = get_schedule(game_date=fetch_date.strftime("%Y-%m-%d"))
+            except Exception as e:
+                logger.error(f"Failed to fetch schedule for {fetch_date}: {e}")
+                continue
 
             for d in data.get("dates", []):
                 game_date = datetime.strptime(d["date"], "%Y-%m-%d").date()

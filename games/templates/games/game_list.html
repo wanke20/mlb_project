@@ -105,11 +105,50 @@
         color: var(--text-muted);
         margin-top: 2px;
     }
+
+    .day-switcher {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .day-btn {
+        padding: 6px 16px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .day-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .day-btn.active {
+        background: var(--accent-surface);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
 </style>
 
 <div class="page-header">
-    <h1>Today's Games</h1>
-    <p class="subtitle">{% timezone "America/New_York" %}{% now "F jS, Y" %}{% endtimezone %}</p>
+    <h1>
+        {% if selected_day == "yesterday" %}Yesterday's Games
+        {% elif selected_day == "tomorrow" %}Tomorrow's Games
+        {% else %}Today's Games
+        {% endif %}
+    </h1>
+    <p class="subtitle">{{ target_date|date:"F jS, Y" }}</p>
+    <div class="day-switcher">
+        <a class="day-btn {% if selected_day == 'yesterday' %}active{% endif %}" href="?date=yesterday">Yesterday</a>
+        <a class="day-btn {% if selected_day == 'today' %}active{% endif %}" href="?date=today">Today</a>
+        <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
+    </div>
 </div>
 
 <div class="games-grid">
@@ -177,7 +216,7 @@
 
 </a>
 {% empty %}
-<p style="color: var(--text-muted);">No games found for today.</p>
+<p style="color: var(--text-muted);">No games found for {{ target_date|date:"F jS" }}.</p>
 {% endfor %}
 </div>
 

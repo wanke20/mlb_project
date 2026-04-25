@@ -3,6 +3,8 @@ import json
 import math
 from statistics import NormalDist
 
+from datetime import date, timedelta
+
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.db.models import F
@@ -26,10 +28,25 @@ def trends(request):
 
 
 def game_list(request):
+    today = date.today()
+    day_param = request.GET.get("date", "today")
+    if day_param == "yesterday":
+        target_date = today - timedelta(days=1)
+    elif day_param == "tomorrow":
+        target_date = today + timedelta(days=1)
+    else:
+        day_param = "today"
+        target_date = today
+
     games = Game.objects.select_related(
         "home_team", "away_team", "home_pitcher", "away_pitcher"
-    ).order_by(F("start_time_utc").asc(nulls_last=True), "game_id")
-    return render(request, "games/game_list.html", {"games": games})
+    ).filter(date=target_date).order_by(F("start_time_utc").asc(nulls_last=True), "game_id")
+
+    return render(request, "games/game_list.html", {
+        "games": games,
+        "selected_day": day_param,
+        "target_date": target_date,
+    })
 
 
 def game_prediction(request, game_id):
