@@ -4,8 +4,49 @@
 {% block title %}Weather{% endblock %}
 
 {% block content %}
-<h1>Game Day Weather</h1>
-<p class="subtitle">Rain probability at first pitch for today's games (ET times shown)</p>
+<style>
+    .day-switcher {
+        display: flex;
+        gap: 8px;
+        margin: 8px 0 24px;
+    }
+
+    .day-btn {
+        padding: 6px 16px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .day-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .day-btn.active {
+        background: var(--accent-surface);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+</style>
+
+<h1>
+    {% if selected_day == "yesterday" %}Yesterday's Weather
+    {% elif selected_day == "tomorrow" %}Tomorrow's Weather
+    {% else %}Game Day Weather
+    {% endif %}
+</h1>
+<p class="subtitle">Rain probability at first pitch for {{ target_date|date:"F jS, Y" }} (ET times shown)</p>
+<div class="day-switcher">
+    <a class="day-btn {% if selected_day == 'yesterday' %}active{% endif %}" href="?date=yesterday">Yesterday</a>
+    <a class="day-btn {% if selected_day == 'today' %}active{% endif %}" href="?date=today">Today</a>
+    <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
+</div>
 
 {% if game_weather %}
 <table>
@@ -51,6 +92,6 @@
     </tbody>
 </table>
 {% else %}
-    <p>No games scheduled for today.</p>
+    <p>No games scheduled for {{ target_date|date:"F jS" }}.</p>
 {% endif %}
 {% endblock %}

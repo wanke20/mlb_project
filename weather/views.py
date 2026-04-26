@@ -1,11 +1,23 @@
+from datetime import date, timedelta
+
 from django.shortcuts import render
 from games.models import Game
 
 
 def weather(request):
+    today = date.today()
+    day_param = request.GET.get("date", "today")
+    if day_param == "yesterday":
+        target_date = today - timedelta(days=1)
+    elif day_param == "tomorrow":
+        target_date = today + timedelta(days=1)
+    else:
+        day_param = "today"
+        target_date = today
+
     games = Game.objects.select_related(
         "home_team", "away_team", "weather"
-    ).order_by("start_time_utc")
+    ).filter(date=target_date).order_by("start_time_utc")
 
     game_weather = []
     for game in games:
@@ -25,4 +37,8 @@ def weather(request):
                 "unknown": True,
             })
 
-    return render(request, "weather/weather.html", {"game_weather": game_weather})
+    return render(request, "weather/weather.html", {
+        "game_weather": game_weather,
+        "selected_day": day_param,
+        "target_date": target_date,
+    })

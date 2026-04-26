@@ -134,21 +134,25 @@
         border-color: var(--accent);
         color: var(--accent);
     }
+
 </style>
 
-<div class="page-header">
-    <h1>
-        {% if selected_day == "yesterday" %}Yesterday's Games
-        {% elif selected_day == "tomorrow" %}Tomorrow's Games
-        {% else %}Today's Games
-        {% endif %}
-    </h1>
-    <p class="subtitle">{{ target_date|date:"F jS, Y" }}</p>
-    <div class="day-switcher">
-        <a class="day-btn {% if selected_day == 'yesterday' %}active{% endif %}" href="?date=yesterday">Yesterday</a>
-        <a class="day-btn {% if selected_day == 'today' %}active{% endif %}" href="?date=today">Today</a>
-        <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
+<div class="page-header" style="display: flex; align-items: flex-start; justify-content: space-between;">
+    <div>
+        <h1>
+            {% if selected_day == "yesterday" %}Yesterday's Games
+            {% elif selected_day == "tomorrow" %}Tomorrow's Games
+            {% else %}Today's Games
+            {% endif %}
+        </h1>
+        <p class="subtitle">{{ target_date|date:"F jS, Y" }}</p>
+        <div class="day-switcher">
+            <a class="day-btn {% if selected_day == 'yesterday' %}active{% endif %}" href="?date=yesterday">Yesterday</a>
+            <a class="day-btn {% if selected_day == 'today' %}active{% endif %}" href="?date=today">Today</a>
+            <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
+        </div>
     </div>
+    <a href="{% url 'export_csv' %}?date={{ selected_day }}" style="font-size: 13px; color: var(--accent);">↓ Export CSV</a>
 </div>
 
 <div class="games-grid">

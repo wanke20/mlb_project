@@ -119,12 +119,21 @@ def game_prediction(request, game_id):
 
 
 def export_csv(request):
+    today = date.today()
+    day_param = request.GET.get("date", "today")
+    if day_param == "yesterday":
+        target_date = today - timedelta(days=1)
+    elif day_param == "tomorrow":
+        target_date = today + timedelta(days=1)
+    else:
+        target_date = today
+
     games = Game.objects.select_related(
         "home_team", "away_team", "home_pitcher", "away_pitcher"
-    ).order_by(F("start_time_utc").asc(nulls_last=True))
+    ).filter(date=target_date).order_by(F("start_time_utc").asc(nulls_last=True))
 
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="mlb_export_{timezone.now().strftime("%Y-%m-%d")}.csv"'
+    response["Content-Disposition"] = f'attachment; filename="mlb_export_{target_date}.csv"'
 
     writer = csv.writer(response)
     writer.writerow([
