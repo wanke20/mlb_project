@@ -7,9 +7,9 @@ from datetime import date, timedelta
 
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from django.db.models import F
+from django.db.models import F, Prefetch
 from django.utils import timezone
-from .models import Game, Team
+from .models import Game, Team, Reliever
 from games.services.prediction import predict_game, effective_pitcher_era
 
 
@@ -50,9 +50,13 @@ def game_list(request):
 
 
 def game_prediction(request, game_id):
+    reliever_qs = Reliever.objects.order_by('-season_appearances')
     game = get_object_or_404(
         Game.objects.select_related(
             "home_team", "away_team", "home_pitcher", "away_pitcher"
+        ).prefetch_related(
+            Prefetch('home_team__relievers', queryset=reliever_qs),
+            Prefetch('away_team__relievers', queryset=reliever_qs),
         ),
         game_id=game_id,
     )
@@ -106,6 +110,8 @@ def game_prediction(request, game_id):
     context = {
         "game": game,
         "prediction": prediction,
+        "away_relievers": list(game.away_team.relievers.all()[:5]),
+        "home_relievers": list(game.home_team.relievers.all()[:5]),
         "win_chart": chart_json(x_win, y_win),
         "run_chart": chart_json(x_run, y_run),
         "total_chart": chart_json(x_total, y_total),
@@ -188,6 +194,28 @@ def export_csv(request):
             ap.strikeouts if ap else "", hp.strikeouts if hp else "",
             ap.innings_pitched if ap else "", hp.innings_pitched if hp else "",
             rain_pct, has_roof,
+        ])
+
+    return response
+
+
+def export_bullpen_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="mlb_bullpen_{date.today()}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(["team", "reliever", "appearances", "era", "saves", "holds", "pitched_yesterday", "yesterday_pitches"])
+
+    for r in Reliever.objects.select_related("team").order_by("team__name", "-season_appearances"):
+        writer.writerow([
+            r.team.name,
+            r.name,
+            r.season_appearances,
+            r.era if r.era is not None else "",
+            r.saves,
+            r.holds,
+            "Yes" if r.pitched_yesterday else "No",
+            r.yesterday_pitches if r.yesterday_pitches is not None else "",
         ])
 
     return response

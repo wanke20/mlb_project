@@ -102,6 +102,52 @@ def safe_int(value):
         return None
 
 
+def get_team_reliever_stats(team_id, season=2026):
+    """Return top relievers for a team sorted by season appearances."""
+    url = f"{BASE_URL}/stats"
+    params = {"stats": "season", "group": "pitching", "season": season, "teamId": team_id, "sportId": 1, "playerPool": "All", "limit": 40}
+    r = requests.get(url, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    relievers = []
+    for split in data.get("stats", [{}])[0].get("splits", []):
+        stat = split.get("stat", {})
+        if (safe_int(stat.get("gamesStarted")) or 0) >= 3:
+            continue
+        appearances = safe_int(stat.get("gamesPitched")) or 0
+        if appearances == 0:
+            continue
+        player = split.get("player", {})
+        relievers.append({
+            "mlb_id": player["id"],
+            "name": player.get("fullName", ""),
+            "appearances": appearances,
+            "saves": safe_int(stat.get("saves")) or 0,
+            "holds": safe_int(stat.get("holds")) or 0,
+            "era": safe_float(stat.get("era")),
+        })
+
+    return sorted(relievers, key=lambda x: x["appearances"], reverse=True)
+
+
+def get_game_pitchers(game_id):
+    """Return {player_mlb_id: pitches_thrown} for all pitchers who appeared in a game."""
+    url = f"{BASE_URL}/game/{game_id}/boxscore"
+    r = requests.get(url, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    result = {}
+    for side in ("home", "away"):
+        players = data.get("teams", {}).get(side, {}).get("players", {})
+        for player_data in players.values():
+            pitches = safe_int(player_data.get("stats", {}).get("pitching", {}).get("pitchesThrown"))
+            if pitches:
+                result[player_data["person"]["id"]] = pitches
+    return result
+
+
 def get_pitcher_stats(pitcher_id):
     year = 2026
 

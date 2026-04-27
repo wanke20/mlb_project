@@ -152,7 +152,10 @@
             <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
         </div>
     </div>
-    <a href="{% url 'export_csv' %}?date={{ selected_day }}" style="font-size: 13px; color: var(--accent);">↓ Export CSV</a>
+    <div style="display: flex; align-items: center; gap: 20px;">
+        <a href="{% url 'export_csv' %}?date={{ selected_day }}" style="font-size: 13px; color: var(--accent);">↓ Export Games CSV</a>
+        <a href="{% url 'export_bullpen_csv' %}" style="font-size: 13px; color: var(--accent);">↓ Export Bullpen CSV</a>
+    </div>
 </div>
 
 <div class="games-grid">
@@ -217,6 +220,7 @@
             TBD
         {% endif %}
     </div>
+
 
 </a>
 {% empty %}

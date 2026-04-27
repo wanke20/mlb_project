@@ -1,10 +1,11 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
-from games.models import Team, Pitcher, Game
+from games.models import Team, Pitcher, Game, Reliever
 from games.services.mlb_api import (
     get_schedule, get_pitcher_stats, get_standings,
     get_team_season_hitting_stats, get_team_last7_hitting_stats,
+    get_team_reliever_stats, get_game_pitchers,
 )
 from datetime import datetime, date, timedelta
 
@@ -219,3 +220,53 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f"Successfully updated {total_games} games.")
         )
+
+        # -----------------------
+        # Step 5: Fetch top relievers and mark yesterday's appearances
+        # -----------------------
+        upcoming_team_ids = set()
+        for game in Game.objects.filter(date__in=[today, tomorrow]).select_related("home_team", "away_team"):
+            upcoming_team_ids.add(game.home_team.mlb_id)
+            upcoming_team_ids.add(game.away_team.mlb_id)
+
+        Reliever.objects.filter(team__mlb_id__in=upcoming_team_ids).update(
+            pitched_yesterday=False, yesterday_pitches=None
+        )
+
+        for team in Team.objects.filter(mlb_id__in=upcoming_team_ids):
+            try:
+                team_relievers = get_team_reliever_stats(team.mlb_id)
+            except Exception as e:
+                logger.error(f"Failed to fetch relievers for team {team.mlb_id}: {e}")
+                continue
+
+            for r in team_relievers[:10]:
+                Reliever.objects.update_or_create(
+                    mlb_id=r["mlb_id"],
+                    defaults={
+                        "name": r["name"],
+                        "team": team,
+                        "season_appearances": r["appearances"],
+                        "saves": r["saves"],
+                        "holds": r["holds"],
+                        "era": r["era"],
+                    }
+                )
+
+        self.stdout.write(self.style.SUCCESS("Updated reliever rosters."))
+
+        yesterday = today - timedelta(days=1)
+        for game in Game.objects.filter(date=yesterday):
+            try:
+                pitchers = get_game_pitchers(game.game_id)
+            except Exception as e:
+                logger.error(f"Failed to fetch boxscore for game {game.game_id}: {e}")
+                continue
+
+            for pitcher_id, pitches in pitchers.items():
+                Reliever.objects.filter(mlb_id=pitcher_id).update(
+                    pitched_yesterday=True,
+                    yesterday_pitches=pitches,
+                )
+
+        self.stdout.write(self.style.SUCCESS("Marked yesterday's reliever appearances."))

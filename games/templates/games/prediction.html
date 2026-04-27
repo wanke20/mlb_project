@@ -333,4 +333,76 @@ if (eraEl) {
 }
 </script>
 </div>
+
+{% if away_relievers or home_relievers %}
+<div class="section-heading">Bullpen Usage</div>
+<table>
+    <thead>
+        <tr>
+            <th>Team</th>
+            <th>Reliever</th>
+            <th>App</th>
+            <th>ERA</th>
+            <th>SV</th>
+            <th>HLD</th>
+            <th>Pitched Yesterday</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in away_relievers %}
+        <tr class="away-row">
+            {% if forloop.first %}<td rowspan="{{ away_relievers|length }}">{{ game.away_team.name }} <span class="team-badge badge-away">Away</span></td>{% endif %}
+            <td>{{ r.name }}</td>
+            <td>{{ r.season_appearances }}</td>
+            <td>
+                {% if r.era is not None %}
+                    {% if r.era < 3.0 %}<span class="era-elite">{{ r.era }}</span>
+                    {% elif r.era < 4.0 %}<span class="era-good">{{ r.era }}</span>
+                    {% elif r.era < 5.0 %}<span class="era-avg">{{ r.era }}</span>
+                    {% elif r.era < 6.0 %}<span class="era-poor">{{ r.era }}</span>
+                    {% else %}<span class="era-bad">{{ r.era }}</span>
+                    {% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td>{{ r.saves }}</td>
+            <td>{{ r.holds }}</td>
+            <td>
+                {% if r.pitched_yesterday %}
+                    <span style="color: #f9e2af; font-weight: 600;">Yes — {{ r.yesterday_pitches }}p</span>
+                {% else %}
+                    <span class="na">No</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% for r in home_relievers %}
+        <tr class="home-row">
+            {% if forloop.first %}<td rowspan="{{ home_relievers|length }}">{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>{% endif %}
+            <td>{{ r.name }}</td>
+            <td>{{ r.season_appearances }}</td>
+            <td>
+                {% if r.era is not None %}
+                    {% if r.era < 3.0 %}<span class="era-elite">{{ r.era }}</span>
+                    {% elif r.era < 4.0 %}<span class="era-good">{{ r.era }}</span>
+                    {% elif r.era < 5.0 %}<span class="era-avg">{{ r.era }}</span>
+                    {% elif r.era < 6.0 %}<span class="era-poor">{{ r.era }}</span>
+                    {% else %}<span class="era-bad">{{ r.era }}</span>
+                    {% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td>{{ r.saves }}</td>
+            <td>{{ r.holds }}</td>
+            <td>
+                {% if r.pitched_yesterday %}
+                    <span style="color: #f9e2af; font-weight: 600;">Yes — {{ r.yesterday_pitches }}p</span>
+                {% else %}
+                    <span class="na">No</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
 {% endblock %}

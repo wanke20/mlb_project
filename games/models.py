@@ -55,3 +55,21 @@ class Game(models.Model):
 
     def __str__(self):
         return f"{self.away_team} @ {self.home_team}"
+
+
+class Reliever(models.Model):
+    mlb_id = models.IntegerField(unique=True)
+    name = models.CharField(max_length=100)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='relievers')
+    season_appearances = models.IntegerField(default=0)
+    saves = models.IntegerField(default=0)
+    holds = models.IntegerField(default=0)
+    era = models.FloatField(null=True, blank=True)
+    pitched_yesterday = models.BooleanField(default=False)
+    yesterday_pitches = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-season_appearances']
+
+    def __str__(self):
+        return self.name
