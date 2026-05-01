@@ -152,10 +152,14 @@
             <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
         </div>
     </div>
-    <div style="display: flex; align-items: center; gap: 20px;">
-        <a href="{% url 'export_csv' %}?date={{ selected_day }}" style="font-size: 13px; color: var(--accent);">↓ Export Games CSV</a>
-        <a href="{% url 'export_bullpen_csv' %}" style="font-size: 13px; color: var(--accent);">↓ Export Bullpen CSV</a>
-    </div>
+    {% if selected_day == "yesterday" %}
+        <a href="{% url 'export_results_csv' %}?date=yesterday" style="font-size: 13px; color: var(--accent);">↓ Export Results CSV</a>
+    {% else %}
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <a href="{% url 'export_csv' %}?date={{ selected_day }}" style="font-size: 13px; color: var(--accent);">↓ Export Games CSV</a>
+            <a href="{% url 'export_bullpen_csv' %}" style="font-size: 13px; color: var(--accent);">↓ Export Bullpen CSV</a>
+        </div>
+    {% endif %}
 </div>
 
 <div class="games-grid">
@@ -163,11 +167,15 @@
 <a class="game-card" href="{% url 'game_prediction' game.game_id %}">
 
     <div class="game-time">
-        Start Time (ET):
-        {% if game.start_time_utc %}
-            {{ game.start_time_utc|timezone:"America/New_York"|date:"g:i A" }}
+        {% if selected_day == "yesterday" and game.home_score is not None %}
+            Final
         {% else %}
-            TBD
+            Start Time (ET):
+            {% if game.start_time_utc %}
+                {{ game.start_time_utc|timezone:"America/New_York"|date:"g:i A" }}
+            {% else %}
+                TBD
+            {% endif %}
         {% endif %}
     </div>
 
@@ -181,7 +189,11 @@
             <div class="matchup-logo"></div>
         {% endif %}
         {% endwith %}
-        <div class="matchup-label">{{ game.away_team.name }} @ {{ game.home_team.name }}</div>
+        {% if selected_day == "yesterday" and game.home_score is not None %}
+            <div class="matchup-label">{{ game.away_score }} – {{ game.home_score }}</div>
+        {% else %}
+            <div class="matchup-label">{{ game.away_team.name }} @ {{ game.home_team.name }}</div>
+        {% endif %}
         {% with home_abbr=game.home_team|logo_abbr %}
         {% if home_abbr %}
             {% with logo="logos/"|add:home_abbr|add:".png" %}
@@ -200,7 +212,7 @@
     <div class="pitcher-info">
         Away SP:
         {% if game.away_pitcher %}
-            {{ game.away_pitcher.name }} ({{ game.away_pitcher.era|default:"—" }} ERA)
+            {{ game.away_pitcher.name }} ({{ game.away_pitcher.era|default:"—" }} ERA){% if selected_day == "yesterday" and game.away_starter_runs is not None %} — {{ game.away_starter_runs }} ER, {{ game.away_starter_innings }} IP{% endif %}
         {% else %}
             TBD
         {% endif %}
@@ -215,7 +227,7 @@
     <div class="pitcher-info">
         Home SP:
         {% if game.home_pitcher %}
-            {{ game.home_pitcher.name }} ({{ game.home_pitcher.era|default:"—" }} ERA)
+            {{ game.home_pitcher.name }} ({{ game.home_pitcher.era|default:"—" }} ERA){% if selected_day == "yesterday" and game.home_starter_runs is not None %} — {{ game.home_starter_runs }} ER, {{ game.home_starter_innings }} IP{% endif %}
         {% else %}
             TBD
         {% endif %}

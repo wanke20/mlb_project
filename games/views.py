@@ -157,6 +157,8 @@ def export_csv(request):
         "away_strikeouts", "home_strikeouts",
         "away_innings_pitched", "home_innings_pitched",
         "rain_pct", "has_roof",
+        "away_score", "home_score",
+        "away_starter_er", "home_starter_er",
     ])
 
     eastern = timezone.get_fixed_timezone(-240)  # EDT (UTC-4); close enough for display
@@ -194,6 +196,61 @@ def export_csv(request):
             ap.strikeouts if ap else "", hp.strikeouts if hp else "",
             ap.innings_pitched if ap else "", hp.innings_pitched if hp else "",
             rain_pct, has_roof,
+            game.away_score if game.away_score is not None else "",
+            game.home_score if game.home_score is not None else "",
+            game.away_starter_runs if game.away_starter_runs is not None else "",
+            game.home_starter_runs if game.home_starter_runs is not None else "",
+        ])
+
+    return response
+
+
+def export_results_csv(request):
+    today = date.today()
+    day_param = request.GET.get("date", "today")
+    if day_param == "yesterday":
+        target_date = today - timedelta(days=1)
+    elif day_param == "tomorrow":
+        target_date = today + timedelta(days=1)
+    else:
+        target_date = today
+
+    games = Game.objects.select_related(
+        "home_team", "away_team", "home_pitcher", "away_pitcher"
+    ).filter(date=target_date).order_by(F("start_time_utc").asc(nulls_last=True))
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="mlb_results_{target_date}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "date", "away_team", "home_team",
+        "away_score", "home_score", "winner",
+        "away_starter", "away_starter_er", "away_starter_ip",
+        "home_starter", "home_starter_er", "home_starter_ip",
+        "away_record", "home_record",
+        "away_era", "home_era",
+    ])
+
+    for game in games:
+        away, home = game.away_team, game.home_team
+        ap, hp = game.away_pitcher, game.home_pitcher
+        writer.writerow([
+            game.date,
+            away.name, home.name,
+            game.away_score if game.away_score is not None else "",
+            game.home_score if game.home_score is not None else "",
+            away.name if game.away_score is not None and game.home_score is not None and game.away_score > game.home_score else home.name if game.away_score is not None and game.home_score is not None else "",
+            ap.name if ap else "",
+            game.away_starter_runs if game.away_starter_runs is not None else "",
+            game.away_starter_innings or "",
+            hp.name if hp else "",
+            game.home_starter_runs if game.home_starter_runs is not None else "",
+            game.home_starter_innings or "",
+            f"{away.wins}-{away.losses}" if away.wins is not None else "",
+            f"{home.wins}-{home.losses}" if home.wins is not None else "",
+            ap.era if ap else "",
+            hp.era if hp else "",
         ])
 
     return response

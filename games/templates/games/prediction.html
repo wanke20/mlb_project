@@ -193,6 +193,37 @@
     </tbody>
 </table>
 
+{% if game.home_score is not None %}
+<div class="section-heading">Game Result</div>
+<table>
+    <thead>
+        <tr>
+            <th>Team</th>
+            <th>Final Score</th>
+            <th>Starting Pitcher</th>
+            <th>ER</th>
+            <th>IP</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="away-row">
+            <td>{{ game.away_team.name }} <span class="team-badge badge-away">Away</span></td>
+            <td>{{ game.away_score }}</td>
+            <td>{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_starter_runs is not None %}{{ game.away_starter_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_starter_innings %}{{ game.away_starter_innings }}{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+        <tr class="home-row">
+            <td>{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>
+            <td>{{ game.home_score }}</td>
+            <td>{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_starter_runs is not None %}{{ game.home_starter_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_starter_innings %}{{ game.home_starter_innings }}{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+    </tbody>
+</table>
+{% endif %}
+
 <div class="section-heading">Predictions</div>
 <div class="charts-row">
     <div class="chart-block">

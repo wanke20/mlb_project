@@ -5,7 +5,7 @@ from games.models import Team, Pitcher, Game, Reliever
 from games.services.mlb_api import (
     get_schedule, get_pitcher_stats, get_standings,
     get_team_season_hitting_stats, get_team_last7_hitting_stats,
-    get_team_reliever_stats, get_game_pitchers,
+    get_team_reliever_stats, get_game_pitchers, get_game_result,
 )
 from datetime import datetime, date, timedelta
 
@@ -270,3 +270,17 @@ class Command(BaseCommand):
                 )
 
         self.stdout.write(self.style.SUCCESS("Marked yesterday's reliever appearances."))
+
+        # -----------------------
+        # Step 6: Fetch final scores for yesterday's completed games
+        # -----------------------
+        results_updated = 0
+        for game in Game.objects.filter(date=yesterday, home_score__isnull=True):
+            try:
+                result = get_game_result(game.game_id)
+                Game.objects.filter(pk=game.pk).update(**result)
+                results_updated += 1
+            except Exception as e:
+                logger.error(f"Failed to fetch result for game {game.game_id}: {e}")
+
+        self.stdout.write(self.style.SUCCESS(f"Fetched final scores for {results_updated} games."))

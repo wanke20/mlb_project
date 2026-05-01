@@ -53,6 +53,13 @@ class Game(models.Model):
     home_pitcher = models.ForeignKey(Pitcher, related_name="home_starts", null=True, blank=True, on_delete=models.SET_NULL)
     away_pitcher = models.ForeignKey(Pitcher, related_name="away_starts", null=True, blank=True, on_delete=models.SET_NULL)
 
+    home_score = models.IntegerField(null=True, blank=True)
+    away_score = models.IntegerField(null=True, blank=True)
+    home_starter_runs = models.IntegerField(null=True, blank=True)
+    away_starter_runs = models.IntegerField(null=True, blank=True)
+    home_starter_innings = models.CharField(max_length=8, null=True, blank=True)
+    away_starter_innings = models.CharField(max_length=8, null=True, blank=True)
+
     def __str__(self):
         return f"{self.away_team} @ {self.home_team}"
 

@@ -131,6 +131,38 @@ def get_team_reliever_stats(team_id, season=2026):
     return sorted(relievers, key=lambda x: x["appearances"], reverse=True)
 
 
+def get_game_result(game_id):
+    """Return final score and starter earned runs from a completed game's boxscore."""
+    url = f"{BASE_URL}/game/{game_id}/boxscore"
+    r = requests.get(url, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    def extract(side):
+        team = data.get("teams", {}).get(side, {})
+        runs = safe_int(team.get("teamStats", {}).get("batting", {}).get("runs"))
+        pitcher_ids = team.get("pitchers", [])
+        starter_er = None
+        starter_ip = None
+        if pitcher_ids:
+            starter_key = f"ID{pitcher_ids[0]}"
+            pitching = team.get("players", {}).get(starter_key, {}).get("stats", {}).get("pitching", {})
+            starter_er = safe_int(pitching.get("earnedRuns"))
+            starter_ip = pitching.get("inningsPitched")
+        return runs, starter_er, starter_ip
+
+    home_runs, home_er, home_ip = extract("home")
+    away_runs, away_er, away_ip = extract("away")
+    return {
+        "home_score": home_runs,
+        "away_score": away_runs,
+        "home_starter_runs": home_er,
+        "away_starter_runs": away_er,
+        "home_starter_innings": home_ip,
+        "away_starter_innings": away_ip,
+    }
+
+
 def get_game_pitchers(game_id):
     """Return {player_mlb_id: pitches_thrown} for all pitchers who appeared in a game."""
     url = f"{BASE_URL}/game/{game_id}/boxscore"
