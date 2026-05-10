@@ -38,6 +38,15 @@ class Pitcher(models.Model):
     walks = models.IntegerField(null=True, blank=True)
     innings_pitched = models.CharField(max_length=16, null=True, blank=True)
 
+    # Advanced metrics: FIP and K-BB% computed locally from statsapi;
+    # wOBA, xERA, xwOBA, barrel% from Baseball Savant CSV leaderboards.
+    fip = models.FloatField(null=True, blank=True)
+    k_bb_pct = models.FloatField(null=True, blank=True)
+    woba = models.FloatField(null=True, blank=True)
+    xera = models.FloatField(null=True, blank=True)
+    xwoba = models.FloatField(null=True, blank=True)
+    barrel_pct = models.FloatField(null=True, blank=True)
+
     def __str__(self):
         return self.name
 

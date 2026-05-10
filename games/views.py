@@ -156,6 +156,12 @@ def export_csv(request):
         "away_whip", "home_whip",
         "away_strikeouts", "home_strikeouts",
         "away_innings_pitched", "home_innings_pitched",
+        "away_fip", "home_fip",
+        "away_xera", "home_xera",
+        "away_woba", "home_woba",
+        "away_xwoba", "home_xwoba",
+        "away_k_bb_pct", "home_k_bb_pct",
+        "away_barrel_pct", "home_barrel_pct",
         "rain_pct", "has_roof",
         "away_score", "home_score",
         "away_starter_er", "home_starter_er",
@@ -195,6 +201,12 @@ def export_csv(request):
             ap.whip if ap else "", hp.whip if hp else "",
             ap.strikeouts if ap else "", hp.strikeouts if hp else "",
             ap.innings_pitched if ap else "", hp.innings_pitched if hp else "",
+            ap.fip if ap else "", hp.fip if hp else "",
+            ap.xera if ap else "", hp.xera if hp else "",
+            ap.woba if ap else "", hp.woba if hp else "",
+            ap.xwoba if ap else "", hp.xwoba if hp else "",
+            ap.k_bb_pct if ap else "", hp.k_bb_pct if hp else "",
+            ap.barrel_pct if ap else "", hp.barrel_pct if hp else "",
             rain_pct, has_roof,
             game.away_score if game.away_score is not None else "",
             game.home_score if game.home_score is not None else "",
@@ -230,6 +242,11 @@ def export_results_csv(request):
         "home_starter", "home_starter_er", "home_starter_ip",
         "away_record", "home_record",
         "away_era", "home_era",
+        "away_fip", "home_fip",
+        "away_xera", "home_xera",
+        "away_xwoba", "home_xwoba",
+        "away_k_bb_pct", "home_k_bb_pct",
+        "away_barrel_pct", "home_barrel_pct",
     ])
 
     for game in games:
@@ -251,6 +268,11 @@ def export_results_csv(request):
             f"{home.wins}-{home.losses}" if home.wins is not None else "",
             ap.era if ap else "",
             hp.era if hp else "",
+            ap.fip if ap else "", hp.fip if hp else "",
+            ap.xera if ap else "", hp.xera if hp else "",
+            ap.xwoba if ap else "", hp.xwoba if hp else "",
+            ap.k_bb_pct if ap else "", hp.k_bb_pct if hp else "",
+            ap.barrel_pct if ap else "", hp.barrel_pct if hp else "",
         ])
 
     return response

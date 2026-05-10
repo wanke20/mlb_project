@@ -7,6 +7,7 @@ from games.services.mlb_api import (
     get_team_season_hitting_stats, get_team_last7_hitting_stats,
     get_team_reliever_stats, get_game_pitchers, get_game_result,
 )
+from games.services.savant_stats import get_savant_leaderboard
 from datetime import datetime, date, timedelta
 
 import logging
@@ -114,6 +115,18 @@ class Command(BaseCommand):
             logger.error(f"Failed to fetch last-7-day hitting stats: {e}")
 
         # -----------------------
+        # Step 3.5: Fetch Baseball Savant Statcast leaderboard (one bulk pull)
+        # -----------------------
+        try:
+            advanced_pitching = get_savant_leaderboard(year=2026)
+            self.stdout.write(
+                self.style.SUCCESS(f"Fetched Statcast stats for {len(advanced_pitching)} pitchers.")
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch Savant leaderboard: {e}")
+            advanced_pitching = {}
+
+        # -----------------------
         # Step 4: Update games and probable pitchers (today + tomorrow)
         # -----------------------
         today = date.today()
@@ -176,23 +189,31 @@ class Command(BaseCommand):
                             return None
 
                         pitcher_id = pitcher_data["id"]
-                        
+
                         try:
                             pitcher_stats = get_pitcher_stats(pitcher_id)
                         except Exception as e:
                             logger.error(f"Failed to fetch pitcher stats: {e}")
                             return
 
+                        defaults = {
+                            "name": pitcher_data["fullName"],
+                            "era": pitcher_stats["era"],
+                            "whip": pitcher_stats["whip"],
+                            "strikeouts": pitcher_stats["strikeouts"],
+                            "walks": pitcher_stats["walks"],
+                            "innings_pitched": pitcher_stats["innings_pitched"],
+                            "fip": pitcher_stats.get("fip"),
+                            "k_bb_pct": pitcher_stats.get("k_bb_pct"),
+                        }
+
+                        advanced = advanced_pitching.get(pitcher_id)
+                        if advanced:
+                            defaults.update(advanced)
+
                         pitcher, _ = Pitcher.objects.update_or_create(
                             mlb_id=pitcher_id,
-                            defaults={
-                                "name": pitcher_data["fullName"],
-                                "era": pitcher_stats["era"],
-                                "whip": pitcher_stats["whip"],
-                                "strikeouts": pitcher_stats["strikeouts"],
-                                "walks": pitcher_stats["walks"],
-                                "innings_pitched": pitcher_stats["innings_pitched"],
-                            }
+                            defaults=defaults,
                         )
 
                         return pitcher

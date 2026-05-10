@@ -180,6 +180,59 @@ def get_game_pitchers(game_id):
     return result
 
 
+def _innings_to_float(ip):
+    """Convert MLB IP string ('12.1' = 12 1/3, '12.2' = 12 2/3) to a float."""
+    if ip is None:
+        return None
+    try:
+        ip = str(ip)
+        whole, _, frac = ip.partition(".")
+        whole_val = int(whole) if whole else 0
+        frac_val = {"0": 0.0, "1": 1.0 / 3.0, "2": 2.0 / 3.0, "": 0.0}.get(frac)
+        if frac_val is None:
+            return float(ip)
+        return whole_val + frac_val
+    except (TypeError, ValueError):
+        return None
+
+
+# Approximate FanGraphs FIP constant — recalculated yearly to make league
+# FIP equal league ERA. 3.15 is a reasonable mid-season estimate; relative
+# pitcher comparisons are unaffected by small offsets.
+FIP_CONSTANT = 3.15
+
+
+def _compute_fip(stat):
+    hr = safe_int(stat.get("homeRuns"))
+    bb = safe_int(stat.get("baseOnBalls"))
+    hbp = safe_int(stat.get("hitByPitch"))
+    so = safe_int(stat.get("strikeOuts"))
+    ip = _innings_to_float(stat.get("inningsPitched"))
+    if None in (hr, bb, hbp, so) or not ip:
+        return None
+    return round((13 * hr + 3 * (bb + hbp) - 2 * so) / ip + FIP_CONSTANT, 2)
+
+
+def _compute_k_bb_pct(stat):
+    so = safe_int(stat.get("strikeOuts"))
+    bb = safe_int(stat.get("baseOnBalls"))
+    bf = safe_int(stat.get("battersFaced"))
+    if None in (so, bb) or not bf:
+        return None
+    return round((so - bb) / bf * 100.0, 1)
+
+
+EMPTY_PITCHER_STATS = {
+    "era": None,
+    "whip": None,
+    "strikeouts": None,
+    "walks": None,
+    "innings_pitched": None,
+    "fip": None,
+    "k_bb_pct": None,
+}
+
+
 def get_pitcher_stats(pitcher_id):
     year = 2026
 
@@ -195,13 +248,7 @@ def get_pitcher_stats(pitcher_id):
 
     people = data.get("people", [])
     if not people:
-        return {
-            "era": None,
-            "whip": None,
-            "strikeouts": None,
-            "walks": None,
-            "innings_pitched": None,
-        }
+        return dict(EMPTY_PITCHER_STATS)
 
     stats = people[0].get("stats", [])
 
@@ -213,12 +260,8 @@ def get_pitcher_stats(pitcher_id):
             "strikeouts": safe_int(stat.get("strikeOuts")),
             "walks": safe_int(stat.get("baseOnBalls")),
             "innings_pitched": stat.get("inningsPitched"),
+            "fip": _compute_fip(stat),
+            "k_bb_pct": _compute_k_bb_pct(stat),
         }
 
-    return {
-        "era": None,
-        "whip": None,
-        "strikeouts": None,
-        "walks": None,
-        "innings_pitched": None,
-    }
+    return dict(EMPTY_PITCHER_STATS)

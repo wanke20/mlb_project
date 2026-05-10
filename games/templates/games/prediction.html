@@ -193,6 +193,44 @@
     </tbody>
 </table>
 
+<div class="section-heading">Advanced Pitching Metrics</div>
+<table>
+    <thead>
+        <tr>
+            <th>Team</th>
+            <th>Pitcher</th>
+            <th>FIP</th>
+            <th>xERA</th>
+            <th>wOBA</th>
+            <th>xwOBA</th>
+            <th>K-BB%</th>
+            <th>Barrel%</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="away-row">
+            <td>{{ game.away_team.name }} <span class="team-badge badge-away">Away</span></td>
+            <td>{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
+            <td>{% if game.away_pitcher and game.away_pitcher.fip is not None %}{{ game.away_pitcher.fip|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_pitcher and game.away_pitcher.xera is not None %}{{ game.away_pitcher.xera|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_pitcher and game.away_pitcher.woba is not None %}{{ game.away_pitcher.woba|floatformat:3 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_pitcher and game.away_pitcher.xwoba is not None %}{{ game.away_pitcher.xwoba|floatformat:3 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_pitcher and game.away_pitcher.k_bb_pct is not None %}{{ game.away_pitcher.k_bb_pct|floatformat:1 }}%{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_pitcher and game.away_pitcher.barrel_pct is not None %}{{ game.away_pitcher.barrel_pct|floatformat:1 }}%{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+        <tr class="home-row">
+            <td>{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>
+            <td>{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
+            <td>{% if game.home_pitcher and game.home_pitcher.fip is not None %}{{ game.home_pitcher.fip|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_pitcher and game.home_pitcher.xera is not None %}{{ game.home_pitcher.xera|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_pitcher and game.home_pitcher.woba is not None %}{{ game.home_pitcher.woba|floatformat:3 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_pitcher and game.home_pitcher.xwoba is not None %}{{ game.home_pitcher.xwoba|floatformat:3 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_pitcher and game.home_pitcher.k_bb_pct is not None %}{{ game.home_pitcher.k_bb_pct|floatformat:1 }}%{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_pitcher and game.home_pitcher.barrel_pct is not None %}{{ game.home_pitcher.barrel_pct|floatformat:1 }}%{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+    </tbody>
+</table>
+
 {% if game.home_score is not None %}
 <div class="section-heading">Game Result</div>
 <table>
