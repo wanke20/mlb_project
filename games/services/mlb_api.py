@@ -273,7 +273,7 @@ def get_pitcher_stats(pitcher_id):
     return empty
 
 
-def get_team_top_hitters(team_id, season=2026, limit=4):
+def get_team_top_hitters(team_id, season=2026, limit=6):
     """Return top hitters for a team by OPS, restricted to the team's PA leaders.
 
     Fetches the top 20 by plate appearances (to exclude bench/pitcher noise),
