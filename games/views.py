@@ -9,8 +9,8 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.db.models import F, Prefetch
 from django.utils import timezone
-from .models import Game, Team, Reliever
-from games.services.prediction import predict_game, effective_pitcher_era
+from .models import Game, Team, Reliever, Hitter
+from games.services.prediction import predict_game
 
 
 def _linspace(start, stop, n):
@@ -51,12 +51,15 @@ def game_list(request):
 
 def game_prediction(request, game_id):
     reliever_qs = Reliever.objects.order_by('-season_appearances')
+    hitter_qs = Hitter.objects.order_by('rank')
     game = get_object_or_404(
         Game.objects.select_related(
             "home_team", "away_team", "home_pitcher", "away_pitcher"
         ).prefetch_related(
             Prefetch('home_team__relievers', queryset=reliever_qs),
             Prefetch('away_team__relievers', queryset=reliever_qs),
+            Prefetch('home_team__hitters', queryset=hitter_qs),
+            Prefetch('away_team__hitters', queryset=hitter_qs),
         ),
         game_id=game_id,
     )
@@ -90,20 +93,6 @@ def game_prediction(request, game_id):
     x_total = _linspace(mu_total - 4 * sigma_total, mu_total + 4 * sigma_total, 200)
     y_total = [total_dist.pdf(x) for x in x_total]
 
-    # ERA posteriors — uncertainty shrinks as innings pitched grows
-    home_era_val, home_conf = effective_pitcher_era(game.home_pitcher)
-    away_era_val, away_conf = effective_pitcher_era(game.away_pitcher)
-
-    def era_std(conf):
-        return 1.5 * (1 - conf) + 0.3 * conf
-
-    home_era_dist = NormalDist(home_era_val, era_std(home_conf))
-    away_era_dist = NormalDist(away_era_val, era_std(away_conf))
-
-    era_min = max(min(home_era_val - 4 * era_std(home_conf), away_era_val - 4 * era_std(away_conf)), 0)
-    era_max = min(max(home_era_val + 4 * era_std(home_conf), away_era_val + 4 * era_std(away_conf)), 12)
-    x_era = _linspace(era_min, era_max, 200)
-
     def chart_json(xs, ys):
         return json.dumps([{"x": round(x, 4), "y": round(y, 4)} for x, y in zip(xs, ys)])
 
@@ -112,13 +101,11 @@ def game_prediction(request, game_id):
         "prediction": prediction,
         "away_relievers": list(game.away_team.relievers.all()[:5]),
         "home_relievers": list(game.home_team.relievers.all()[:5]),
+        "away_hitters": list(game.away_team.hitters.all()),
+        "home_hitters": list(game.home_team.hitters.all()),
         "win_chart": chart_json(x_win, y_win),
         "run_chart": chart_json(x_run, y_run),
         "total_chart": chart_json(x_total, y_total),
-        "home_era_chart": chart_json(x_era, [home_era_dist.pdf(x) for x in x_era]),
-        "away_era_chart": chart_json(x_era, [away_era_dist.pdf(x) for x in x_era]),
-        "home_pitcher_name": game.home_pitcher.name if game.home_pitcher else "TBA",
-        "away_pitcher_name": game.away_pitcher.name if game.away_pitcher else "TBA",
     }
 
     return render(request, "games/prediction.html", context)
@@ -152,6 +139,7 @@ def export_csv(request):
         "away_season_avg", "home_season_avg",
         "away_season_ops", "home_season_ops",
         "away_pitcher", "home_pitcher",
+        "away_pitcher_throws", "home_pitcher_throws",
         "away_era", "home_era",
         "away_whip", "home_whip",
         "away_strikeouts", "home_strikeouts",
@@ -197,6 +185,7 @@ def export_csv(request):
             away.season_avg, home.season_avg,
             away.season_ops, home.season_ops,
             ap.name if ap else "", hp.name if hp else "",
+            ap.throws if ap else "", hp.throws if hp else "",
             ap.era if ap else "", hp.era if hp else "",
             ap.whip if ap else "", hp.whip if hp else "",
             ap.strikeouts if ap else "", hp.strikeouts if hp else "",
@@ -238,8 +227,8 @@ def export_results_csv(request):
     writer.writerow([
         "date", "away_team", "home_team",
         "away_score", "home_score", "winner",
-        "away_starter", "away_starter_er", "away_starter_ip",
-        "home_starter", "home_starter_er", "home_starter_ip",
+        "away_starter", "away_starter_throws", "away_starter_er", "away_starter_ip",
+        "home_starter", "home_starter_throws", "home_starter_er", "home_starter_ip",
         "away_record", "home_record",
         "away_era", "home_era",
         "away_fip", "home_fip",
@@ -259,9 +248,11 @@ def export_results_csv(request):
             game.home_score if game.home_score is not None else "",
             away.name if game.away_score is not None and game.home_score is not None and game.away_score > game.home_score else home.name if game.away_score is not None and game.home_score is not None else "",
             ap.name if ap else "",
+            ap.throws if ap else "",
             game.away_starter_runs if game.away_starter_runs is not None else "",
             game.away_starter_innings or "",
             hp.name if hp else "",
+            hp.throws if hp else "",
             game.home_starter_runs if game.home_starter_runs is not None else "",
             game.home_starter_innings or "",
             f"{away.wins}-{away.losses}" if away.wins is not None else "",
@@ -295,6 +286,38 @@ def export_bullpen_csv(request):
             r.holds,
             "Yes" if r.pitched_yesterday else "No",
             r.yesterday_pitches if r.yesterday_pitches is not None else "",
+        ])
+
+    return response
+
+
+def export_hitters_csv(request):
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="mlb_hitters_{date.today()}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "team", "rank", "hitter", "bats",
+        "season_pa", "season_avg", "season_ops",
+        "vs_lhp_pa", "vs_lhp_avg", "vs_lhp_ops",
+        "vs_rhp_pa", "vs_rhp_avg", "vs_rhp_ops",
+    ])
+
+    for h in Hitter.objects.select_related("team").order_by("team__name", "rank"):
+        writer.writerow([
+            h.team.name,
+            h.rank if h.rank is not None else "",
+            h.name,
+            h.bats or "",
+            h.season_pa if h.season_pa is not None else "",
+            h.season_avg or "",
+            h.season_ops or "",
+            h.vs_l_pa if h.vs_l_pa is not None else "",
+            h.vs_l_avg or "",
+            h.vs_l_ops or "",
+            h.vs_r_pa if h.vs_r_pa is not None else "",
+            h.vs_r_avg or "",
+            h.vs_r_ops or "",
         ])
 
     return response

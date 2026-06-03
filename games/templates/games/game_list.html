@@ -158,6 +158,7 @@
         <div style="display: flex; align-items: center; gap: 20px;">
             <a href="{% url 'export_csv' %}?date={{ selected_day }}" style="font-size: 13px; color: var(--accent);">↓ Export Games CSV</a>
             <a href="{% url 'export_bullpen_csv' %}" style="font-size: 13px; color: var(--accent);">↓ Export Bullpen CSV</a>
+            <a href="{% url 'export_hitters_csv' %}" style="font-size: 13px; color: var(--accent);">↓ Export Hitters CSV</a>
         </div>
     {% endif %}
 </div>

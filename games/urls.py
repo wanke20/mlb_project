@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import home_page, game_list, game_prediction, trends, export_csv, export_bullpen_csv, export_results_csv
+from .views import home_page, game_list, game_prediction, trends, export_csv, export_bullpen_csv, export_results_csv, export_hitters_csv
 
 urlpatterns = [
     path("", home_page, name="home_page"),
@@ -9,4 +9,5 @@ urlpatterns = [
     path("export/", export_csv, name="export_csv"),
     path("export/bullpen/", export_bullpen_csv, name="export_bullpen_csv"),
     path("export/results/", export_results_csv, name="export_results_csv"),
+    path("export/hitters/", export_hitters_csv, name="export_hitters_csv"),
 ]

@@ -32,6 +32,7 @@ class Team(models.Model):
 class Pitcher(models.Model):
     name = models.CharField(max_length=100)
     mlb_id = models.IntegerField(unique=True)
+    throws = models.CharField(max_length=1, null=True, blank=True)  # 'L', 'R', 'S'
     era = models.FloatField(null=True, blank=True)
     whip = models.FloatField(null=True, blank=True)
     strikeouts = models.IntegerField(null=True, blank=True)
@@ -71,6 +72,32 @@ class Game(models.Model):
 
     def __str__(self):
         return f"{self.away_team} @ {self.home_team}"
+
+
+class Hitter(models.Model):
+    mlb_id = models.IntegerField(unique=True)
+    name = models.CharField(max_length=100)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='hitters')
+    bats = models.CharField(max_length=1, null=True, blank=True)  # 'L', 'R', 'S'
+    rank = models.IntegerField(null=True, blank=True)  # 1..N within team, by PA
+
+    season_pa = models.IntegerField(null=True, blank=True)
+    season_avg = models.CharField(max_length=8, null=True, blank=True)
+    season_ops = models.CharField(max_length=8, null=True, blank=True)
+
+    vs_l_pa = models.IntegerField(null=True, blank=True)
+    vs_l_avg = models.CharField(max_length=8, null=True, blank=True)
+    vs_l_ops = models.CharField(max_length=8, null=True, blank=True)
+
+    vs_r_pa = models.IntegerField(null=True, blank=True)
+    vs_r_avg = models.CharField(max_length=8, null=True, blank=True)
+    vs_r_ops = models.CharField(max_length=8, null=True, blank=True)
+
+    class Meta:
+        ordering = ['rank']
+
+    def __str__(self):
+        return self.name
 
 
 class Reliever(models.Model):

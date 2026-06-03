@@ -223,6 +223,7 @@ def _compute_k_bb_pct(stat):
 
 
 EMPTY_PITCHER_STATS = {
+    "throws": None,
     "era": None,
     "whip": None,
     "strikeouts": None,
@@ -250,11 +251,14 @@ def get_pitcher_stats(pitcher_id):
     if not people:
         return dict(EMPTY_PITCHER_STATS)
 
-    stats = people[0].get("stats", [])
+    person = people[0]
+    throws = person.get("pitchHand", {}).get("code")
+    stats = person.get("stats", [])
 
     if stats and stats[0].get("splits"):
         stat = stats[0]["splits"][0].get("stat", {})
         return {
+            "throws": throws,
             "era": safe_float(stat.get("era")),
             "whip": safe_float(stat.get("whip")),
             "strikeouts": safe_int(stat.get("strikeOuts")),
@@ -264,4 +268,91 @@ def get_pitcher_stats(pitcher_id):
             "k_bb_pct": _compute_k_bb_pct(stat),
         }
 
-    return dict(EMPTY_PITCHER_STATS)
+    empty = dict(EMPTY_PITCHER_STATS)
+    empty["throws"] = throws
+    return empty
+
+
+def get_team_top_hitters(team_id, season=2026, limit=4):
+    """Return top hitters for a team by plate appearances.
+
+    Returns a list of dicts with mlb_id, name, season pa/avg/ops. Pitchers and
+    minor pinch-hit-only roles are filtered out via a PA floor.
+    """
+    url = f"{BASE_URL}/stats"
+    params = {
+        "stats": "season",
+        "group": "hitting",
+        "season": season,
+        "teamId": team_id,
+        "sportId": 1,
+        "playerPool": "All",
+        "sortStat": "plateAppearances",
+        "order": "desc",
+        "limit": 20,
+    }
+    r = requests.get(url, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    hitters = []
+    for split in data.get("stats", [{}])[0].get("splits", []):
+        stat = split.get("stat", {})
+        player = split.get("player", {})
+        pa = safe_int(stat.get("plateAppearances")) or 0
+        if pa < 30:
+            continue
+        hitters.append({
+            "mlb_id": player["id"],
+            "name": player.get("fullName", ""),
+            "pa": pa,
+            "avg": stat.get("avg"),
+            "ops": stat.get("ops"),
+        })
+        if len(hitters) >= limit:
+            break
+    return hitters
+
+
+EMPTY_HITTER_DETAILS = {
+    "bats": None,
+    "vs_l_pa": None, "vs_l_avg": None, "vs_l_ops": None,
+    "vs_r_pa": None, "vs_r_avg": None, "vs_r_ops": None,
+}
+
+
+def get_hitter_details(player_id, season=2026):
+    """Return handedness plus vs-LHP/RHP splits for a hitter.
+
+    One hydrated call to /people/{id} returns both batSide and the two splits.
+    """
+    url = f"{BASE_URL}/people/{player_id}"
+    params = {
+        "hydrate": f"stats(group=hitting,type=statSplits,sitCodes=[vl,vr],season={season})"
+    }
+    r = requests.get(url, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    people = data.get("people", [])
+    if not people:
+        return dict(EMPTY_HITTER_DETAILS)
+
+    person = people[0]
+    result = dict(EMPTY_HITTER_DETAILS)
+    result["bats"] = person.get("batSide", {}).get("code")
+
+    for stat_group in person.get("stats", []):
+        for split in stat_group.get("splits", []):
+            code = split.get("split", {}).get("code")
+            stat = split.get("stat", {})
+            if code == "vl":
+                result["vs_l_pa"] = safe_int(stat.get("plateAppearances"))
+                result["vs_l_avg"] = stat.get("avg")
+                result["vs_l_ops"] = stat.get("ops")
+            elif code == "vr":
+                result["vs_r_pa"] = safe_int(stat.get("plateAppearances"))
+                result["vs_r_avg"] = stat.get("avg")
+                result["vs_r_ops"] = stat.get("ops")
+
+    return result

@@ -75,6 +75,19 @@
         gap: 20px;
         align-items: flex-start;
     }
+
+    .hand-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
+        margin-left: 4px;
+        vertical-align: middle;
+        background: rgba(249, 226, 175, 0.15);
+        color: #f9e2af;
+        letter-spacing: 0.04em;
+    }
 </style>
 
 <h1>{{ game.away_team.name }} @ {{ game.home_team.name }}</h1>
@@ -120,7 +133,7 @@
                 {% endif %}
             </td>
             <td>{{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }}</td>
-            <td>{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
+            <td>{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% if game.away_pitcher.throws %} <span class="hand-badge">{{ game.away_pitcher.throws }}HP</span>{% endif %}{% else %}<span class="na">TBA</span>{% endif %}</td>
             <td>
                 {% if game.away_pitcher and game.away_pitcher.era is not None %}
                     {% if game.away_pitcher.era < 3.0 %}
@@ -167,7 +180,7 @@
                 {% endif %}
             </td>
             <td>{{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }}</td>
-            <td>{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
+            <td>{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% if game.home_pitcher.throws %} <span class="hand-badge">{{ game.home_pitcher.throws }}HP</span>{% endif %}{% else %}<span class="na">TBA</span>{% endif %}</td>
             <td>
                 {% if game.home_pitcher and game.home_pitcher.era is not None %}
                     {% if game.home_pitcher.era < 3.0 %}
@@ -230,6 +243,70 @@
         </tr>
     </tbody>
 </table>
+
+{% if away_hitters or home_hitters %}
+<div class="section-heading">Top Hitters &amp; Platoon Splits</div>
+<table>
+    <thead>
+        <tr>
+            <th>Team</th>
+            <th>Hitter</th>
+            <th>Bats</th>
+            <th>PA</th>
+            <th>AVG</th>
+            <th>OPS</th>
+            <th>vs LHP (AVG / OPS)</th>
+            <th>vs RHP (AVG / OPS)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in away_hitters %}
+        <tr class="away-row">
+            {% if forloop.first %}<td rowspan="{{ away_hitters|length }}">{{ game.away_team.name }} <span class="team-badge badge-away">Away</span></td>{% endif %}
+            <td>{{ h.name }}</td>
+            <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>
+                {% if h.vs_l_avg or h.vs_l_ops %}
+                    {{ h.vs_l_avg|default:"—" }} / {{ h.vs_l_ops|default:"—" }}
+                    {% if h.vs_l_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_l_pa }} PA)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td>
+                {% if h.vs_r_avg or h.vs_r_ops %}
+                    {{ h.vs_r_avg|default:"—" }} / {{ h.vs_r_ops|default:"—" }}
+                    {% if h.vs_r_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_r_pa }} PA)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        {% for h in home_hitters %}
+        <tr class="home-row">
+            {% if forloop.first %}<td rowspan="{{ home_hitters|length }}">{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>{% endif %}
+            <td>{{ h.name }}</td>
+            <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>
+                {% if h.vs_l_avg or h.vs_l_ops %}
+                    {{ h.vs_l_avg|default:"—" }} / {{ h.vs_l_ops|default:"—" }}
+                    {% if h.vs_l_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_l_pa }} PA)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td>
+                {% if h.vs_r_avg or h.vs_r_ops %}
+                    {{ h.vs_r_avg|default:"—" }} / {{ h.vs_r_ops|default:"—" }}
+                    {% if h.vs_r_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_r_pa }} PA)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 
 {% if game.home_score is not None %}
 <div class="section-heading">Game Result</div>
@@ -298,22 +375,6 @@
         <canvas id="totalChart" width="400" height="220"></canvas>
     </div>
 
-    {% if home_era_chart or away_era_chart %}
-    <div class="chart-block">
-        <div class="stat-label">Pitcher ERA posterior (wider = less data)</div>
-        <br>
-        <canvas id="eraChart" width="400" height="272"></canvas>
-    </div>
-<script id="era-chart-data" type="application/json">
-{
-    "away": {% if away_era_chart %}{{ away_era_chart|safe }}{% else %}null{% endif %},
-    "home": {% if home_era_chart %}{{ home_era_chart|safe }}{% else %}null{% endif %},
-    "awayName": "{% if away_pitcher_name %}{{ away_pitcher_name|escapejs }}{% endif %}",
-    "homeName": "{% if home_pitcher_name %}{{ home_pitcher_name|escapejs }}{% endif %}"
-}
-</script>
-{% endif %}
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
 function makeChart(id, data, color) {
@@ -349,57 +410,6 @@ const totalChartData = JSON.parse('{{ total_chart|escapejs }}');
 makeChart('winChart', winChartData, '#89b4fa');
 makeChart('runChart', runChartData, '#89b4fa');
 makeChart('totalChart', totalChartData, '#a6e3a1');
-
-const eraEl = document.getElementById('era-chart-data');
-if (eraEl) {
-    const eraData = JSON.parse(eraEl.textContent);
-    const eraDatasets = [];
-
-    if (eraData.away) {
-        eraDatasets.push({
-            label: eraData.awayName,
-            data: eraData.away,
-            showLine: true,
-            borderColor: '#89b4fa',
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 0,
-            tension: 0.4
-        });
-    }
-
-    if (eraData.home) {
-        eraDatasets.push({
-            label: eraData.homeName,
-            data: eraData.home,
-            showLine: true,
-            borderColor: '#a6e3a1',
-            borderWidth: 2,
-            fill: false,
-            pointRadius: 0,
-            tension: 0.4
-        });
-    }
-
-    new Chart(document.getElementById('eraChart'), {
-        type: 'scatter',
-        data: { datasets: eraDatasets },
-        options: {
-            animation: false,
-            responsive: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: { color: '#cdd6f4', font: { size: 12 } }
-                }
-            },
-            scales: {
-                x: { ticks: { color: '#7f849c', maxTicksLimit: 6 }, grid: { color: '#45475a' } },
-                y: { ticks: { color: '#7f849c', maxTicksLimit: 5 }, grid: { color: '#45475a' } }
-            }
-        }
-    });
-}
 </script>
 </div>
 
