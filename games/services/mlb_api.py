@@ -274,10 +274,10 @@ def get_pitcher_stats(pitcher_id):
 
 
 def get_team_top_hitters(team_id, season=2026, limit=4):
-    """Return top hitters for a team by plate appearances.
+    """Return top hitters for a team by OPS, restricted to the team's PA leaders.
 
-    Returns a list of dicts with mlb_id, name, season pa/avg/ops. Pitchers and
-    minor pinch-hit-only roles are filtered out via a PA floor.
+    Fetches the top 20 by plate appearances (to exclude bench/pitcher noise),
+    then sorts those by OPS descending and returns the top `limit`.
     """
     url = f"{BASE_URL}/stats"
     params = {
@@ -309,9 +309,9 @@ def get_team_top_hitters(team_id, season=2026, limit=4):
             "avg": stat.get("avg"),
             "ops": stat.get("ops"),
         })
-        if len(hitters) >= limit:
-            break
-    return hitters
+
+    hitters.sort(key=lambda h: safe_float(h["ops"]) or -1.0, reverse=True)
+    return hitters[:limit]
 
 
 EMPTY_HITTER_DETAILS = {
