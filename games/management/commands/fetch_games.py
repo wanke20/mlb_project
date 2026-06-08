@@ -356,7 +356,7 @@ class Command(BaseCommand):
         # Step 6: Fetch final scores for yesterday's completed games
         # -----------------------
         results_updated = 0
-        for game in Game.objects.filter(date=yesterday, home_score__isnull=True):
+        for game in Game.objects.filter(date=yesterday):
             try:
                 result = get_game_result(game.game_id)
                 Game.objects.filter(pk=game.pk).update(**result)
