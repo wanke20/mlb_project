@@ -1,0 +1,38 @@
+{% extends "games/base.html" %}
+
+{% block title %}Log in — MLB Predictions{% endblock %}
+{% block page_class %}page-narrow{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-head">
+        <h1>Welcome back</h1>
+        <p>Log in to make and track your picks.</p>
+    </div>
+
+    {% if form.non_field_errors %}
+        <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+
+        <div class="field">
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}<ul class="errorlist">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Log in</button>
+    </form>
+
+    <p class="auth-alt">New here? <a href="{% url 'signup' %}">Create an account</a></p>
+</div>
+{% endblock %}

@@ -1,256 +1,57 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}MLB Predictions{% endblock %}</title>
-    <style>
-        :root {
-            --bg:            #1e1e2e;
-            --surface:       #27273a;
-            --surface-hover: #313145;
-            --border:        #45475a;
-            --header-bg:     #181825;
-            --text:          #cdd6f4;
-            --text-muted:    #7f849c;
-            --accent:         #89b4fa;
-            --accent-hover:   #b4d0fb;
-            --accent-surface: rgba(137, 180, 250, 0.08);
-            --green:         #a6e3a1;
-            --red:           #f38ba8;
-            --orange:        #fab387;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        /* ---- Nav ---- */
-        nav {
-            background: var(--header-bg);
-            border-bottom: 1px solid var(--border);
-            padding: 0 40px;
-            display: flex;
-            align-items: center;
-            height: 52px;
-            gap: 28px;
-        }
-
-        nav .brand {
-            font-weight: bold;
-            font-size: 15px;
-            color: var(--text);
-            text-decoration: none;
-            margin-right: 12px;
-        }
-
-        nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 14px;
-        }
-
-        nav a:hover {
-            color: var(--text);
-        }
-
-        /* ---- Page wrapper ---- */
-        .page {
-            padding: 40px;
-            max-width: 1300px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            font-size: 22px;
-            margin-bottom: 8px;
-        }
-
-        h2 {
-            font-size: 17px;
-            margin: 28px 0 12px;
-            color: var(--text-muted);
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 13px;
-            margin-bottom: 28px;
-        }
-
-        p {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 10px;
-            line-height: 1.6;
-        }
-
-        a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: var(--accent-hover);
-            text-decoration: underline;
-        }
-
-        ul {
-            padding-left: 20px;
-            color: var(--text-muted);
-            font-size: 14px;
-            line-height: 2;
-        }
-
-        code {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 1px 6px;
-            font-size: 12px;
-            color: var(--text);
-        }
-
-        /* ---- Cards (game list) ---- */
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 16px;
-            text-decoration: none;
-            color: var(--text);
-            display: block;
-            transition: border-color 0.15s, background 0.15s;
-        }
-
-        .card:hover {
-            background: var(--surface-hover);
-            border-color: var(--accent);
-            text-decoration: none;
-            color: var(--text);
-        }
-
-        .card .team {
-            font-size: 17px;
-            font-weight: bold;
-            margin-bottom: 6px;
-        }
-
-        .card .meta {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* ---- Tables ---- */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-            font-size: 14px;
-        }
-
-        thead {
-            background: var(--header-bg);
-        }
-
-        th {
-            padding: 12px 16px;
-            text-align: left;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            white-space: nowrap;
-            border-bottom: 1px solid var(--border);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            user-select: none;
-        }
-
-        th.sortable {
-            cursor: pointer;
-        }
-
-        th.sortable:hover {
-            color: var(--text);
-        }
-
-        th.sort-asc::after  { content: " ▲"; font-size: 10px; color: var(--accent); }
-        th.sort-desc::after { content: " ▼"; font-size: 10px; color: var(--accent); }
-
-        td {
-            padding: 11px 16px;
-            border-bottom: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tbody tr:hover td {
-            background: var(--surface-hover);
-        }
-
-        /* ---- Streak / status badges ---- */
-        .streak-win  { color: var(--green); font-weight: bold; }
-        .streak-loss { color: var(--red);   font-weight: bold; }
-        .hot         { color: var(--orange); font-weight: bold; }
-        .na          { color: var(--text-muted); font-style: italic; }
-
-        /* ---- Charts ---- */
-        .chart-block {
-            background: linear-gradient(160deg, #2e2e45 0%, #27273a 100%);
-            border: 1px solid rgba(137, 180, 250, 0.12);
-            border-radius: 12px;
-            padding: 24px;
-            display: inline-block;
-            margin-bottom: 20px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-        }
-
-        .chart-block img {
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .stat-value {
-            font-size: 22px;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 
-{% load tz %}
-<nav>
-    <a class="brand" href="{% url 'home_page' %}">MLB Predictions</a>
-    <a href="{% url 'game_list' %}">Games</a>
-    <a href="{% url 'trends' %}">Trends</a>
-    <a href="{% url 'weather' %}">Weather</a>
+<nav class="nav">
+    <div class="nav-inner">
+        <a class="brand" href="{% url 'home_page' %}">
+            <span class="logo-dot"></span> MLB Predictions
+        </a>
+        <a class="nav-link" href="{% url 'game_list' %}">Games</a>
+        <a class="nav-link" href="{% url 'trends' %}">Trends</a>
+        <a class="nav-link" href="{% url 'weather' %}">Weather</a>
+        {% if user.is_authenticated %}
+            <a class="nav-link" href="{% url 'dashboard' %}">My Picks</a>
+        {% endif %}
+        <span class="nav-spacer"></span>
+        {% if user.is_authenticated %}
+            <div class="nav-user">
+                <span class="who">{{ user.email|default:user.username }}</span>
+                <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="pill">Log out</button>
+                </form>
+            </div>
+        {% else %}
+            <a class="nav-link" href="{% url 'login' %}">Log in</a>
+            <a class="btn btn-primary btn-sm" href="{% url 'signup' %}">Sign up</a>
+        {% endif %}
+    </div>
 </nav>
 
-<div class="page">
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+        <div class="flash {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="page {% block page_class %}{% endblock %}">
     {% block content %}{% endblock %}
 </div>
 
+{% block scripts %}{% endblock %}
 </body>
 </html>

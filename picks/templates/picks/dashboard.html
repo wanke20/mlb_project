@@ -1,0 +1,292 @@
+{% extends "games/base.html" %}
+{% load static %}
+{% load team_logos %}
+{% load tz %}
+
+{% block title %}My Picks — MLB Predictions{% endblock %}
+
+{% block content %}
+{% get_static_prefix as STATIC_PREFIX %}
+
+<div class="page-header">
+    <div>
+        <h1>My Picks</h1>
+        <p class="subtitle">Your daily pick'em, graded against final scores.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'game_list' %}">Make picks →</a>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-tile">
+        <div class="st-label">Win rate</div>
+        <div class="st-value">{% if win_rate is not None %}{{ win_rate }}%{% else %}—{% endif %}</div>
+        <div class="st-sub">{{ graded_count }} game{{ graded_count|pluralize }} graded</div>
+    </div>
+    <div class="stat-tile">
+        <div class="st-label">Record</div>
+        <div class="st-value">{{ correct }}–{{ incorrect }}</div>
+        <div class="st-sub">correct vs. incorrect</div>
+    </div>
+    <div class="stat-tile">
+        <div class="st-label">Pending</div>
+        <div class="st-value">{{ pending_count }}</div>
+        <div class="st-sub">awaiting results</div>
+    </div>
+    <div class="stat-tile">
+        <div class="st-label">Total picks</div>
+        <div class="st-value">{{ total }}</div>
+        <div class="st-sub">all time</div>
+    </div>
+</div>
+
+{% if assistant_enabled %}
+<div class="assistant-card">
+    <div class="assistant-head">
+        <h3><span class="spark">✨</span> AI Pick Assistant</h3>
+        <div class="day-switcher" id="assistantDay">
+            <button type="button" class="day-btn active" data-day="today">Today</button>
+            <button type="button" class="day-btn" data-day="tomorrow">Tomorrow</button>
+        </div>
+    </div>
+    <p class="assistant-sub">Grounded in your pick'em framework plus the live games, hitters, and bullpen data for the selected day. Ask anything — it won't make picks for you, just advises.</p>
+
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-empty" id="chatEmpty">Ask about today's slate to get started — e.g. “Which home favorites look strongest?”</div>
+    </div>
+
+    <div class="chat-suggestions" id="chatSuggestions">
+        <span class="chat-chip">Best winner picks for the slate?</span>
+        <span class="chat-chip">Which underdogs have an edge?</span>
+        <span class="chat-chip">Any tired bullpens to fade?</span>
+    </div>
+
+    <div class="chat-input-row">
+        <textarea id="chatInput" placeholder="Ask the assistant…" rows="1"></textarea>
+        <button type="button" class="btn btn-primary" id="chatSend">Send</button>
+    </div>
+</div>
+{% endif %}
+
+{% if not total %}
+    <div class="empty-state">
+        <div class="emoji">🎯</div>
+        <h3>No picks yet</h3>
+        <p>Head to the games list and pick some winners — they'll show up here and get graded as results come in.</p>
+        <a class="btn btn-primary" href="{% url 'game_list' %}" style="margin-top:14px;">Browse today's games</a>
+    </div>
+{% endif %}
+
+{% if pending %}
+<h2>Pending</h2>
+<table>
+    <thead>
+        <tr><th>Date</th><th>Matchup</th><th>Your pick</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+        {% for pick in pending %}
+        <tr>
+            <td>{{ pick.game.date|date:"M j" }}</td>
+            <td><a href="{% url 'game_prediction' pick.game.game_id %}">{{ pick.game.away_team.name }} @ {{ pick.game.home_team.name }}</a></td>
+            <td>
+                <span class="pick-row-team">
+                    {% with abbr=pick.picked_team|logo_abbr %}{% if abbr %}<img src="{{ STATIC_PREFIX }}logos/{{ abbr }}.png" alt="">{% endif %}{% endwith %}
+                    {{ pick.picked_team.name }}
+                </span>
+            </td>
+            <td><span class="badge pending">Pending</span></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if graded %}
+<h2>Graded</h2>
+<table>
+    <thead>
+        <tr><th>Date</th><th>Matchup</th><th>Final</th><th>Your pick</th><th>Result</th></tr>
+    </thead>
+    <tbody>
+        {% for pick in graded %}
+        <tr>
+            <td>{{ pick.game.date|date:"M j" }}</td>
+            <td><a href="{% url 'game_prediction' pick.game.game_id %}">{{ pick.game.away_team.name }} @ {{ pick.game.home_team.name }}</a></td>
+            <td>{{ pick.game.away_score }}–{{ pick.game.home_score }}</td>
+            <td>
+                <span class="pick-row-team">
+                    {% with abbr=pick.picked_team|logo_abbr %}{% if abbr %}<img src="{{ STATIC_PREFIX }}logos/{{ abbr }}.png" alt="">{% endif %}{% endwith %}
+                    {{ pick.picked_team.name }}
+                </span>
+            </td>
+            <td>
+                {% if pick.status == "correct" %}
+                    <span class="badge win">Won</span>
+                {% else %}
+                    <span class="badge loss">Lost</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if assistant_enabled %}
+<script>
+(function () {
+    const ENDPOINT = "{% url 'assistant_api' %}";
+    const CSRF = "{{ csrf_token }}";
+    const win = document.getElementById("chatWindow");
+    const empty = document.getElementById("chatEmpty");
+    const input = document.getElementById("chatInput");
+    const sendBtn = document.getElementById("chatSend");
+    const dayBox = document.getElementById("assistantDay");
+    const suggestions = document.getElementById("chatSuggestions");
+
+    let day = "today";
+    let messages = [];   // [{role:'user'|'model', text}]
+    let busy = false;
+
+    dayBox.addEventListener("click", function (e) {
+        const btn = e.target.closest("[data-day]");
+        if (!btn) return;
+        day = btn.dataset.day;
+        dayBox.querySelectorAll(".day-btn").forEach(b => b.classList.toggle("active", b === btn));
+    });
+
+    // --- Minimal, XSS-safe markdown renderer (Gemini replies come back as markdown) ---
+    function escapeHtml(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function inlineMd(s) {
+        // s is already HTML-escaped; only a fixed set of safe tags is emitted.
+        return s
+            .replace(/`([^`]+)`/g, "<code>$1</code>")
+            .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+            .replace(/__([^_]+)__/g, "<strong>$1</strong>")
+            .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>")
+            .replace(/(^|[^_])_([^_\n]+)_/g, "$1<em>$2</em>")
+            .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,
+                     '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    }
+    function renderMarkdown(src) {
+        const lines = escapeHtml(src.replace(/\r\n/g, "\n")).split("\n");
+        const out = [];
+        let para = [], code = [], inCode = false, i = 0;
+        const flushPara = () => { if (para.length) { out.push("<p>" + inlineMd(para.join(" ")) + "</p>"); para = []; } };
+        while (i < lines.length) {
+            const line = lines[i];
+            if (/^\s*```/.test(line)) {
+                if (inCode) { out.push("<pre><code>" + code.join("\n") + "</code></pre>"); code = []; inCode = false; }
+                else { flushPara(); inCode = true; }
+                i++; continue;
+            }
+            if (inCode) { code.push(line); i++; continue; }
+
+            const h = line.match(/^(#{1,6})\s+(.*)$/);
+            if (h) { flushPara(); const lvl = h[1].length; out.push("<h" + lvl + ">" + inlineMd(h[2].trim()) + "</h" + lvl + ">"); i++; continue; }
+
+            if (/^\s*[-*+]\s+/.test(line)) {
+                flushPara();
+                const items = [];
+                while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) { items.push("<li>" + inlineMd(lines[i].replace(/^\s*[-*+]\s+/, "")) + "</li>"); i++; }
+                out.push("<ul>" + items.join("") + "</ul>"); continue;
+            }
+            if (/^\s*\d+\.\s+/.test(line)) {
+                flushPara();
+                const items = [];
+                while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) { items.push("<li>" + inlineMd(lines[i].replace(/^\s*\d+\.\s+/, "")) + "</li>"); i++; }
+                out.push("<ol>" + items.join("") + "</ol>"); continue;
+            }
+            if (/^\s*>\s?/.test(line)) {
+                flushPara();
+                const q = [];
+                while (i < lines.length && /^\s*>\s?/.test(lines[i])) { q.push(inlineMd(lines[i].replace(/^\s*>\s?/, ""))); i++; }
+                out.push("<blockquote>" + q.join("<br>") + "</blockquote>"); continue;
+            }
+            if (line.trim() === "") { flushPara(); i++; continue; }
+            para.push(line.trim()); i++;
+        }
+        if (inCode && code.length) out.push("<pre><code>" + code.join("\n") + "</code></pre>");
+        flushPara();
+        return out.join("");
+    }
+
+    function addBubble(text, cls) {
+        if (empty) empty.style.display = "none";
+        const div = document.createElement("div");
+        div.className = "chat-msg " + cls;
+        if (cls === "bot") {
+            div.classList.add("md");
+            div.innerHTML = renderMarkdown(text);   // input fully HTML-escaped inside renderMarkdown
+        } else {
+            div.textContent = text;                  // textContent => safe against HTML injection
+        }
+        win.appendChild(div);
+        win.scrollTop = win.scrollHeight;
+        return div;
+    }
+
+    function showTyping() {
+        const t = document.createElement("div");
+        t.className = "chat-typing";
+        t.innerHTML = "<span></span><span></span><span></span>";
+        win.appendChild(t);
+        win.scrollTop = win.scrollHeight;
+        return t;
+    }
+
+    async function send() {
+        const text = input.value.trim();
+        if (!text || busy) return;
+        busy = true; sendBtn.disabled = true;
+
+        addBubble(text, "user");
+        messages.push({ role: "user", text: text });
+        input.value = ""; input.style.height = "auto";
+        const typing = showTyping();
+
+        try {
+            const resp = await fetch(ENDPOINT, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF },
+                body: JSON.stringify({ messages: messages, day: day }),
+            });
+            const data = await resp.json().catch(() => ({}));
+            typing.remove();
+            if (resp.ok && data.reply) {
+                addBubble(data.reply, "bot");
+                messages.push({ role: "model", text: data.reply });
+            } else {
+                addBubble(data.error || "Something went wrong. Please try again.", "err");
+                messages.pop();   // drop the user turn so retry doesn't duplicate
+            }
+        } catch (err) {
+            typing.remove();
+            addBubble("Network error — please try again.", "err");
+            messages.pop();
+        } finally {
+            busy = false; sendBtn.disabled = false; input.focus();
+        }
+    }
+
+    sendBtn.addEventListener("click", send);
+    input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+    input.addEventListener("input", function () {
+        input.style.height = "auto";
+        input.style.height = Math.min(input.scrollHeight, 130) + "px";
+    });
+    suggestions.addEventListener("click", function (e) {
+        const chip = e.target.closest(".chat-chip");
+        if (!chip) return;
+        input.value = chip.textContent;
+        send();
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

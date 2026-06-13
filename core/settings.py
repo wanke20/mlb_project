@@ -45,8 +45,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'games',
-    'weather'
+    'weather',
+    'accounts',
+    'picks',
 ]
+
+# Authenticate by email (users are created with username == email).
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'home_page'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -154,3 +166,16 @@ WHITENOISE_USE_FINDERS = DEBUG
 # Keep original filenames after `collectstatic` so `/static/logos/ari.png` works
 # even when WhiteNoise is configured to also serve hashed files.
 WHITENOISE_KEEP_ONLY_HASHED_FILES = False
+
+
+# ---- LLM pick assistant -----------------------------------------------------
+# Provider is pluggable (see picks/services/llm.py). Keys live in env, never in
+# source. Add GEMINI_API_KEY to your .env to enable the assistant.
+# Master on/off switch for the pick assistant UI + API. Flip to "True" (or set
+# ASSISTANT_ENABLED=true in .env) to turn it back on.
+ASSISTANT_ENABLED = os.getenv("ASSISTANT_ENABLED", "False").lower() in ("1", "true", "yes")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+# Hard ceiling on conversation turns sent upstream, to bound token cost.
+LLM_MAX_HISTORY_MESSAGES = int(os.getenv("LLM_MAX_HISTORY_MESSAGES", "20"))

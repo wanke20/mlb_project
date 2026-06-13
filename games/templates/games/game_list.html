@@ -8,136 +8,7 @@
 {% load tz %}
 {% get_static_prefix as STATIC_PREFIX %}
 
-<style>
-    .page-header {
-        margin-bottom: 32px;
-    }
-
-    .page-header h1 {
-        font-size: 26px;
-        margin-bottom: 4px;
-    }
-
-    .games-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 18px;
-    }
-
-    .game-card {
-        background: linear-gradient(160deg, #2e2e45 0%, #27273a 100%);
-        border: 1px solid rgba(137, 180, 250, 0.12);
-        border-radius: 12px;
-        padding: 20px;
-        text-decoration: none;
-        color: var(--text);
-        display: block;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-        transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-    }
-
-    .game-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
-        border-color: rgba(137, 180, 250, 0.4);
-        text-decoration: none;
-        color: var(--text);
-    }
-
-    .game-divider {
-        border: none;
-        border-top: 1px solid rgba(255, 255, 255, 0.06);
-        margin: 12px 0;
-    }
-
-    .game-time {
-        font-size: 11px;
-        color: var(--accent);
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        opacity: 0.8;
-    }
-
-    .game-record {
-        font-size: 13px;
-        color: var(--text-muted);
-        margin-bottom: 4px;
-    }
-
-    .game-pitcher {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-top: 2px;
-    }
-
-    .matchup-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 14px;
-    }
-
-    .matchup-logo {
-        width: 44px;
-        height: 44px;
-        object-fit: contain;
-        flex-shrink: 0;
-    }
-
-    .matchup-label {
-        font-size: 15px;
-        font-weight: bold;
-        color: var(--text);
-        text-align: center;
-        flex: 1;
-    }
-
-    .team-info {
-        font-size: 13px;
-        color: var(--text-muted);
-        margin-bottom: 4px;
-    }
-
-    .pitcher-info {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-top: 2px;
-    }
-
-    .day-switcher {
-        display: flex;
-        gap: 8px;
-        margin-top: 16px;
-    }
-
-    .day-btn {
-        padding: 6px 16px;
-        border-radius: 6px;
-        border: 1px solid var(--border);
-        background: var(--surface);
-        color: var(--text-muted);
-        text-decoration: none;
-        font-size: 13px;
-        transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-
-    .day-btn:hover {
-        border-color: var(--accent);
-        color: var(--text);
-        text-decoration: none;
-    }
-
-    .day-btn.active {
-        background: var(--accent-surface);
-        border-color: var(--accent);
-        color: var(--accent);
-    }
-
-</style>
-
-<div class="page-header" style="display: flex; align-items: flex-start; justify-content: space-between;">
+<div class="page-header">
     <div>
         <h1>
             {% if selected_day == "yesterday" %}Yesterday's Games
@@ -145,61 +16,57 @@
             {% else %}Today's Games
             {% endif %}
         </h1>
-        <p class="subtitle">{{ target_date|date:"F jS, Y" }}</p>
+        <p class="subtitle">{{ target_date|date:"l, F jS, Y" }}</p>
         <div class="day-switcher">
             <a class="day-btn {% if selected_day == 'yesterday' %}active{% endif %}" href="?date=yesterday">Yesterday</a>
             <a class="day-btn {% if selected_day == 'today' %}active{% endif %}" href="?date=today">Today</a>
             <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
         </div>
     </div>
-    {% if selected_day == "yesterday" %}
-        <a href="{% url 'export_results_csv' %}?date=yesterday" style="font-size: 13px; color: var(--accent);">↓ Export Results CSV</a>
-    {% else %}
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <a href="{% url 'export_csv' %}?date={{ selected_day }}" style="font-size: 13px; color: var(--accent);">↓ Export Games CSV</a>
-            <a href="{% url 'export_bullpen_csv' %}" style="font-size: 13px; color: var(--accent);">↓ Export Bullpen CSV</a>
-            <a href="{% url 'export_hitters_csv' %}" style="font-size: 13px; color: var(--accent);">↓ Export Hitters CSV</a>
-        </div>
-    {% endif %}
+    <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:center;">
+        {% if selected_day == "yesterday" %}
+            <a class="pill" href="{% url 'export_results_csv' %}?date=yesterday">↓ Results CSV</a>
+        {% else %}
+            <a class="pill" href="{% url 'export_csv' %}?date={{ selected_day }}">↓ Games CSV</a>
+            <a class="pill" href="{% url 'export_bullpen_csv' %}">↓ Bullpen CSV</a>
+            <a class="pill" href="{% url 'export_hitters_csv' %}">↓ Hitters CSV</a>
+        {% endif %}
+    </div>
 </div>
 
 <div class="games-grid">
 {% for game in games %}
 <a class="game-card" href="{% url 'game_prediction' game.game_id %}">
 
-    <div class="game-time">
-        {% if selected_day == "yesterday" and game.home_score is not None %}
-            Final
-        {% else %}
-            Start Time (ET):
+    {% if game.home_score is not None %}
+        <div class="game-status final"><span class="dot"></span> Final</div>
+    {% else %}
+        <div class="game-status">
+            <span class="dot"></span>
             {% if game.start_time_utc %}
-                {{ game.start_time_utc|timezone:"America/New_York"|date:"g:i A" }}
+                {{ game.start_time_utc|timezone:"America/New_York"|date:"g:i A" }} ET
             {% else %}
-                TBD
+                Start TBD
             {% endif %}
-        {% endif %}
-    </div>
+        </div>
+    {% endif %}
 
     <div class="matchup-header">
         {% with away_abbr=game.away_team|logo_abbr %}
         {% if away_abbr %}
-            {% with logo="logos/"|add:away_abbr|add:".png" %}
-                <img class="matchup-logo" src="{{ STATIC_PREFIX }}{{ logo }}" alt="{{ game.away_team.name }}">
-            {% endwith %}
+            <img class="matchup-logo" src="{{ STATIC_PREFIX }}logos/{{ away_abbr }}.png" alt="{{ game.away_team.name }}">
         {% else %}
             <div class="matchup-logo"></div>
         {% endif %}
         {% endwith %}
-        {% if selected_day == "yesterday" and game.home_score is not None %}
-            <div class="matchup-label">{{ game.away_score }} – {{ game.home_score }}</div>
+        {% if game.home_score is not None %}
+            <div class="matchup-score">{{ game.away_score }} – {{ game.home_score }}</div>
         {% else %}
-            <div class="matchup-label">{{ game.away_team.name }} @ {{ game.home_team.name }}</div>
+            <div class="matchup-label">{{ game.away_team.abbreviation|default:game.away_team.name }} @ {{ game.home_team.abbreviation|default:game.home_team.name }}</div>
         {% endif %}
         {% with home_abbr=game.home_team|logo_abbr %}
         {% if home_abbr %}
-            {% with logo="logos/"|add:home_abbr|add:".png" %}
-                <img class="matchup-logo" src="{{ STATIC_PREFIX }}{{ logo }}" alt="{{ game.home_team.name }}">
-            {% endwith %}
+            <img class="matchup-logo" src="{{ STATIC_PREFIX }}logos/{{ home_abbr }}.png" alt="{{ game.home_team.name }}">
         {% else %}
             <div class="matchup-logo"></div>
         {% endif %}
@@ -207,13 +74,13 @@
     </div>
 
     <div class="team-info">
-        {{ game.away_team.name }}: {{ game.away_team.wins }}-{{ game.away_team.losses }}
-        (Last 10: {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }})
+        {{ game.away_team.name }}
+        <span class="rec">{{ game.away_team.wins }}-{{ game.away_team.losses }} · L10 {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }}</span>
     </div>
     <div class="pitcher-info">
         Away SP:
         {% if game.away_pitcher %}
-            {{ game.away_pitcher.name }} ({{ game.away_pitcher.era|default:"—" }} ERA){% if selected_day == "yesterday" and game.away_starter_runs is not None %} — {{ game.away_starter_runs }} ER, {{ game.away_starter_innings }} IP{% endif %}
+            {{ game.away_pitcher.name }} ({{ game.away_pitcher.era|default:"—" }} ERA){% if game.home_score is not None and game.away_starter_runs is not None %} — {{ game.away_starter_runs }} ER, {{ game.away_starter_innings }} IP{% endif %}
         {% else %}
             TBD
         {% endif %}
@@ -222,22 +89,21 @@
     <hr class="game-divider">
 
     <div class="team-info">
-        {{ game.home_team.name }}: {{ game.home_team.wins }}-{{ game.home_team.losses }}
-        (Last 10: {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }})
+        {{ game.home_team.name }}
+        <span class="rec">{{ game.home_team.wins }}-{{ game.home_team.losses }} · L10 {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }}</span>
     </div>
     <div class="pitcher-info">
         Home SP:
         {% if game.home_pitcher %}
-            {{ game.home_pitcher.name }} ({{ game.home_pitcher.era|default:"—" }} ERA){% if selected_day == "yesterday" and game.home_starter_runs is not None %} — {{ game.home_starter_runs }} ER, {{ game.home_starter_innings }} IP{% endif %}
+            {{ game.home_pitcher.name }} ({{ game.home_pitcher.era|default:"—" }} ERA){% if game.home_score is not None and game.home_starter_runs is not None %} — {{ game.home_starter_runs }} ER, {{ game.home_starter_innings }} IP{% endif %}
         {% else %}
             TBD
         {% endif %}
     </div>
 
-
 </a>
 {% empty %}
-<p style="color: var(--text-muted);">No games found for {{ target_date|date:"F jS" }}.</p>
+<p class="na">No games found for {{ target_date|date:"F jS" }}.</p>
 {% endfor %}
 </div>
 

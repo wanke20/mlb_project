@@ -1,0 +1,44 @@
+{% extends "games/base.html" %}
+
+{% block title %}Sign up — MLB Predictions{% endblock %}
+{% block page_class %}page-narrow{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+    <div class="auth-head">
+        <h1>Create your account</h1>
+        <p>Track your daily pick'em against real results.</p>
+    </div>
+
+    {% if form.non_field_errors %}
+        <div class="form-error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <form method="post" action="{% url 'signup' %}">
+        {% csrf_token %}
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+
+        <div class="field">
+            <label for="{{ form.email.id_for_label }}">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<ul class="errorlist">{% for e in form.email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.password1.id_for_label }}">Password</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}<ul class="errorlist">{% for e in form.password1.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="field">
+            <label for="{{ form.password2.id_for_label }}">Confirm password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<ul class="errorlist">{% for e in form.password2.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Create account</button>
+    </form>
+
+    <p class="auth-alt">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+</div>
+{% endblock %}

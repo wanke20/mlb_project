@@ -92,6 +92,48 @@
 
 <h1>{{ game.away_team.name }} @ {{ game.home_team.name }}</h1>
 
+<div class="pick-panel">
+    <h3>Your pick</h3>
+    {% if game.home_score is not None %}
+        {# Game is final — picks locked, show outcome #}
+        {% if user_pick %}
+            <div class="pick-result">
+                You picked <strong>{{ user_pick.picked_team.name }}</strong>.
+                {% if user_pick.status == "correct" %}
+                    <span class="badge win">Won</span>
+                {% elif user_pick.status == "incorrect" %}
+                    <span class="badge loss">Lost</span>
+                {% else %}
+                    <span class="badge pending">No result</span>
+                {% endif %}
+            </div>
+        {% else %}
+            <p style="margin:8px 0 0;">This game is final — picks are locked.</p>
+        {% endif %}
+    {% elif user.is_authenticated %}
+        <p style="margin:0;">Who wins? Your pick is saved to <a href="{% url 'dashboard' %}">your dashboard</a> and graded when the game finishes.</p>
+        <form method="post" action="{% url 'make_pick' game.game_id %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <div class="pick-options">
+                <button type="submit" name="side" value="away" class="pick-btn {% if user_pick and user_pick.picked_team_id == game.away_team_id %}selected{% endif %}">
+                    <div class="pb-label">{{ game.away_team.name }}</div>
+                    <div class="pb-sub">Away · {{ game.away_team.wins }}-{{ game.away_team.losses }}</div>
+                </button>
+                <button type="submit" name="side" value="home" class="pick-btn {% if user_pick and user_pick.picked_team_id == game.home_team_id %}selected{% endif %}">
+                    <div class="pb-label">{{ game.home_team.name }}</div>
+                    <div class="pb-sub">Home · {{ game.home_team.wins }}-{{ game.home_team.losses }}</div>
+                </button>
+            </div>
+        </form>
+        {% if user_pick %}
+            <div class="pick-result"><span class="badge pending">Current pick</span> {{ user_pick.picked_team.name }} — tap the other team to change it.</div>
+        {% endif %}
+    {% else %}
+        <p style="margin:8px 0 0;"><a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Log in</a> or <a href="{% url 'signup' %}">sign up</a> to pick a winner and track your record.</p>
+    {% endif %}
+</div>
+
 <div class="section-heading">Matchup Summary</div>
 <table>
     <thead>
@@ -385,8 +427,8 @@ function makeChart(id, data, color) {
             responsive: false,
             plugins: { legend: { display: false } },
             scales: {
-                x: { ticks: { color: '#7f849c', maxTicksLimit: 6 }, grid: { color: '#45475a' } },
-                y: { ticks: { color: '#7f849c', maxTicksLimit: 5 }, grid: { color: '#45475a' } }
+                x: { ticks: { color: '#8a93a6', maxTicksLimit: 6 }, grid: { color: '#2a3040' } },
+                y: { ticks: { color: '#8a93a6', maxTicksLimit: 5 }, grid: { color: '#2a3040' } }
             }
         },
         data: {
@@ -407,9 +449,9 @@ const winChartData = JSON.parse('{{ win_chart|escapejs }}');
 const runChartData = JSON.parse('{{ run_chart|escapejs }}');
 const totalChartData = JSON.parse('{{ total_chart|escapejs }}');
 
-makeChart('winChart', winChartData, '#89b4fa');
-makeChart('runChart', runChartData, '#89b4fa');
-makeChart('totalChart', totalChartData, '#a6e3a1');
+makeChart('winChart', winChartData, '#5b9bff');
+makeChart('runChart', runChartData, '#5b9bff');
+makeChart('totalChart', totalChartData, '#3ddc97');
 </script>
 </div>
 
