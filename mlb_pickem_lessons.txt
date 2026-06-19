@@ -1,509 +1,286 @@
 MLB DAILY PICKEM FRAMEWORK
-Lessons learned from 10 days of picks (April 30 – May 9, 2026)
 ================================================================
 
 CORE PHILOSOPHY
 ---------------
 Surface ERA is the starting point, not the conclusion. The real work is
 verifying whether a pitcher's ERA reflects true talent or borrowed luck.
-Pitcher Statcast profiles change throughout the season — a pitcher who
-looked legitimate in April may be running on smoke by June, and vice
-versa. EVERY starting pitcher on both sides of a matchup must be
-verified via Statcast before finalizing any pick, regardless of their
-ERA. Never rely on a prior verification from earlier in the season as
-current; always pull fresh stats. The three-factor checklist for a
-high-confidence pick:
+EVERY starting pitcher on both sides must be verified via Statcast before
+finalizing any pick — stats evolve throughout the season and prior checks
+are never current. Always pull fresh numbers.
 
-  1. One verified elite starter (clean process stats)
-  2. One confirmed regression candidate on the opposing side
-  3. Offensive Support: .720+ Season OPS OR Trending Up (Last 10 OPS > .720 or 5+ Runs/Game).
-
-These three factors interact rather than stack. A strong opposing pitcher
-or dangerous opposing offense is countervailing pressure that raises the
-bar for your pick — it belongs in Stage 1 of the evaluation, not as
-additive evidence in your favor. The stronger the resistance on the
-opposing side, the more clearly your own edge needs to show through.
-
-Offensive stats are lagging indicators of talent but leading indicators of 
-momentum. While season OPS provides the floor, 'Recent Form' (Last 10) 
-provides the ceiling. A mismatch in pitching (Elite vs. Regression) is best 
-exploited when the offense is in an upswing, regardless of the April 
-baseline.
+Evaluation runs in two stages. Stage 1 inventories how much resistance
+the opposing side presents. Stage 2 scores the strength of the edge on
+the side being picked. A strong opposing pitcher or offense is
+countervailing pressure that belongs in Stage 1 — it is NOT additive
+evidence for your pick. The stronger the resistance, the more clearly
+your edge needs to show through.
 
 
 STATCAST VERIFICATION — REQUIRED FOR EVERY STARTING PITCHER
 -------------------------------------------------------------
-Run this check on BOTH starters before finalizing any pick. Pitcher
-stats evolve throughout the season and a prior check — even from earlier
-the same week — should not be treated as current. Always pull fresh
-numbers. Check the following for each starter:
+Check the following for each starter (both sides, every game):
 
   • xERA — primary estimator of true run prevention skill
-  • FIP — strongest quick indicator of underlying pitching quality;
-    isolates strikeouts, walks, and home runs from defense/luck
-  • SIERA — advanced contextual ERA estimator; useful confirmation tool
-  • xwOBA (expected weighted on-base average)
-  • wOBA vs xwOBA gap — key regression signal
-  • Barrel % — contact quality confirmation metric
-  • Average Exit Velocity (avg EV)
-  • Hard Hit % — balls hit 95+ mph
+  • FIP — isolates K, BB, HR from defense/luck; strongest quick check
+  • xwOBA and wOBA vs xwOBA gap — primary regression signal
+  • Barrel % — contact quality confirmation
+  • WHIP — fastest surface red flag (1.50+ = live regression trigger)
 
-Priority order when time is limited:
-  1. xERA vs surface ERA — fastest overall legitimacy check
-  2. FIP/SIERA vs surface ERA — confirms whether performance is sustainable
-  3. xwOBA gap (wOBA vs xwOBA) — identifies regression direction
-  4. Barrel % — supporting confirmation metric, not standalone evidence
-
-xERA and FIP should carry more weight than isolated barrel-rate or
-xwOBA readings. A pitcher with strong strikeout/walk fundamentals and
-clean ERA estimators can often sustain mildly elevated barrel rates for
-extended periods. Barrel rate is most useful as a confirmation signal
-rather than the primary driver of a fade.
-
-WHIP remains the fastest surface-level red flag (1.50+ = live regression
-trigger) and can be read directly from the CSV without a Statcast search.
-But always confirm with xERA/FIP and contact-quality indicators before
-acting on WHIP alone.
+Priority when time is limited: xERA vs ERA → FIP/SIERA vs ERA →
+xwOBA gap → Barrel %. xERA and FIP carry more weight than barrel rate
+alone. Barrel rate is a confirmation signal, not a standalone fade driver.
 
 
 STRIKEOUT/WALK FOUNDATION
 --------------------------
-Strikeout and walk ability stabilize faster than many ERA-based metrics
-early in the season and should be treated as core indicators of underlying
-pitching skill.
+K-BB% stabilizes faster than ERA-based metrics and is a core skill signal.
 
-Priority metrics:
-  • K%
-  • BB%
-  • K-BB%
-  • Swinging Strike Rate (SwStr%)
+  • K-BB% above 18% : Strong foundation
+  • K-BB% 14–18%    : Above average
+  • K-BB% 10–14%    : Average; requires clean contact profile
+  • K-BB% below 10% : Elevated risk
+  • BB% above 10%   : Collapse risk against patient offenses
 
-Guidelines:
-  • K-BB% above 18% : Strong underlying skill foundation
-  • K-BB% 14% – 18% : Above-average profile
-  • K-BB% 10% – 14% : Average; requires supporting contact profile
-  • K-BB% below 10% : Elevated risk unless contact suppression is elite
-  • BB% above 10%   : Increased collapse risk against patient offenses
-
-Pitchers with elite strikeout ability can sometimes sustain elevated
-barrel rates longer than expected. Conversely, low-strikeout pitchers
-with weak K-BB profiles have less margin for error when contact quality
-deteriorates.
-
+Elite strikeout ability can sustain elevated barrel rates longer than
+expected. Low-K pitchers with poor K-BB% have no margin for error.
 
 
 INTERPRETING THE xwOBA GAP
 ---------------------------
-The gap between actual wOBA allowed and xwOBA allowed is the primary
-regression predictor.
+Gap = wOBA allowed minus xwOBA allowed.
 
-  POSITIVE gap (wOBA > xwOBA): pitcher has been UNLUCKY — results worse
-  than contact quality warrants. Positive regression is coming.
-    • ERA is likely overstated; true talent is better than surface ERA shows
-    • The pitcher may actually be a pick despite a bad-looking ERA
+  POSITIVE gap (wOBA > xwOBA): pitcher UNLUCKY — ERA overstates true risk.
+  May be a pick despite a bad-looking surface ERA.
 
-  NEGATIVE gap (xwOBA > wOBA): pitcher is LUCKY — results better than
-  contact quality warrants. Negative regression is coming.
-    • Gap -15 to -25: mild luck, ERA will tick upward over the season
-    • Gap -25 to -40: meaningful smoke, ERA is somewhat misleading
-    • Gap -40 to -60: significant smoke, regression likely within 3-5 starts
-    • Gap -60 or more: extreme luck, ERA is essentially fiction
+  NEGATIVE gap (xwOBA > wOBA): pitcher LUCKY — ERA understates true risk.
+    -15 to -25 : Mild luck
+    -25 to -40 : Meaningful smoke
+    -40 to -60 : Significant smoke, regression likely within 3–5 starts
+    -60+       : ERA is essentially fiction
 
-IMPORTANT: Regression predicts seasonal trends, not next-start outcomes.
-A pitcher with a +60 gap can still dominate for 2-3 more starts before
-correcting. High barrel rate pitchers especially can have isolated
-dominant outings. Regression pressure is likely to appear over time, though the exact timing remains uncertain.
+Regression predicts seasonal trends, not next-start outcomes. A pitcher
+with a large gap can still dominate for 2–3 more starts before correcting.
+
+CONVERGENT REGRESSION (COIN FLIP): If both starters have xwOBA gaps
+above 15 points moving toward each other (your pitcher: negative gap;
+their pitcher: positive gap), the talent difference is narrowing. This
+is a high-variance situation regardless of current ERAs — treat as a
+coin flip and require a strong team quality argument to proceed.
 
 
 BARREL RATE THRESHOLDS
 -----------------------
-Barrel % is a useful contact-quality indicator, but should be interpreted
-alongside xERA, FIP, strikeout ability, and overall run-prevention metrics.
-It is most valuable as a supporting confirmation signal rather than a
-standalone predictor.
+  Below 4%  : Elite contact suppression
+  4–6%      : Very good
+  6–9%      : Acceptable; evaluate alongside xERA/FIP
+  9–12%     : Elevated risk
+  12–15%    : Significant danger zone
+  Above 15% : Extreme; usually unsustainable
 
-  Below 4%   : Elite contact suppression. Strong supporting indicator.
-  4% – 6%    : Very good.
-  6% – 9%    : Acceptable range. Evaluate alongside xERA/FIP.
-  9% – 12%   : Elevated risk. Requires deeper verification.
-  12% – 15%  : Significant danger zone, especially if xERA/FIP also inflated.
-  Above 15%  : Extreme contact-risk profile. Usually unsustainable long-term.
-
-IMPORTANT: High barrel rate alone does not automatically make a pitcher
-a fade. Pitchers with elite strikeout rates or strong ERA estimators can
-sometimes sustain elevated barrel profiles longer than expected.
-Conversely, mediocre strikeout pitchers with poor xERA/FIP and high
-barrel rates are among the most vulnerable regression candidates.
-
-
-OFFENSE THRESHOLD FOR REGRESSION FADE PICKS
----------------------------------------------
-Picking against a regression candidate (high xERA/FIP indicators,
-meaningful xwOBA gap, elevated barrel rate) works most reliably when
-the fading team has a strong enough offense to consistently capitalize
-on mistakes and sequencing breakdowns.
-
-  Preferred baseline: .720+ team OPS for high-confidence regression fades.
-
-However, the .720 mark should not be treated as an absolute cutoff.
-Teams slightly below that threshold can still be viable fade picks when:
-  - The opposing starter has severe regression indicators
-    (large ERA vs xERA/FIP gap, poor contact profile)
-  - The matchup environment is favorable
-    (park factors, platoon advantage, weather conditions)
-  - The opposing bullpen is weak or overworked
-  - The offense has been performing better recently than its season OPS suggests
-
-Below roughly .690 OPS, regression fade picks become substantially less
-reliable unless the opposing pitcher profile is genuinely catastrophic.
-
-OPS remains a useful team-level filter, but should be interpreted within
-the broader matchup context rather than as a rigid pass/fail rule.
-
-
-CONVERGENT REGRESSION (COIN FLIP WARNING): Define as a scenario where the perceived pitching edge is shrinking. This occurs when:
-Our Pitcher is due for Negative Regression: Surface ERA is lower than xERA/FIP (borrowed luck).
-Opposing Pitcher is due for Positive Regression: Surface ERA is higher than xERA/FIP (bad luck).
-Rule: If both starters have xwOBA gaps > 15 points moving toward each other (Our Pitcher: Negative gap; Their Pitcher: Positive gap), trigger CONVERGENT status. This is a high-variance fade signal because the talent gap is narrowing, regardless of current ERAs.
+High barrel rate alone is not a fade trigger. Pitchers with elite K rates
+can sustain elevated barrel profiles. Mediocre K pitchers with poor
+xERA/FIP and high barrel rates are the most vulnerable regression targets.
 
 
 WHIP AS A REGRESSION TRIGGER
 ------------------------------
-WHIP above 1.50 is a reliable surface-level flag for a pitcher in trouble.
-It reflects high baserunner rates that have not yet fully manifested in
-ERA. Against quality offenses (.730+ OPS), high-WHIP pitchers tend to
-give up runs when the sequencing stops protecting them.
+  1.50–1.65 : Elevated risk against strong offenses
+  1.65–1.80 : Significant regression trigger
+  1.80+     : Extreme — ERA almost certainly understates run risk
 
-  1.50 – 1.65 : Elevated risk, particularly against strong offenses
-  1.65 – 1.80 : Significant regression trigger
-  1.80+        : Extreme — ERA almost certainly understates run risk
-
-Always confirm WHIP regression reads with xwOBA and barrel rate.
+Always confirm WHIP reads with xwOBA gap and barrel rate before acting.
 
 
-RAIN RULES
------------
-Per the pickem rules:
-  - Full cancellation/postponement = free win (pick the better team)
-  - Delay (not cancellation) = ignore the possibility of rain
-  - Confirmed postponement announcement overrides all percentage flags
+OFFENSE EVALUATION (PLATOON-ADJUSTED)
+--------------------------------------
+The primary offense question is how well this lineup hits against the
+opposing starter's handedness. You will be provided the top 6 batters
+per team by OPS, along with their OPS vs. RHP and vs. LHP.
 
-Roofed stadiums: rain is completely irrelevant. Always note roofed venues
-(T-Mobile Park Seattle, Globe Life Field Texas, Tropicana Field Tampa,
-Chase Field Arizona, Rogers Centre Toronto, Minute Maid Park Houston,
-American Family Field Milwaukee, loanDepot Park Miami) and use them
-as tiebreakers when rain is a concern elsewhere.
+STEP 1 — SEASON OPS (CONTEXT ANCHOR)
+Note the team's overall season OPS as a baseline. This is not the
+primary driver — a team with a .700 overall OPS may be a .760 lineup
+vs. RHP and a .640 lineup vs. LHP, making overall OPS largely
+irrelevant to the actual matchup. Use it only to flag extreme cases
+(.650 or below = structurally weak offense regardless of splits;
+.800+ = elite floor that holds even in unfavorable platoon situations)
+and as a sanity check against noisy split samples early in the season.
 
+STEP 2 — PLATOON OPS ASSESSMENT
+Identify the opposing starter's handedness (RHP or LHP), then read
+each of the top 6 batters' OPS against that hand. Compute or estimate
+the weighted average, weighting toward the top of the lineup. This
+number is the primary offense tier assignment.
 
-UNVERIFIED STARTERS — IRON RULE
----------------------------------
-NEVER finalize a pick without first running the full Statcast check on
-BOTH starting pitchers. This applies to every ERA range, not just
-sub-3.00. A 4.50 ERA pitcher with a clean barrel rate and negative
-xwOBA gap is a positive regression candidate worth knowing about. A
-3.50 ERA pitcher with a +50 xwOBA gap is smoke worth fading.
+  Strong      : Avg OPS vs. that hand .740+. Reliably punishes
+                regression and sequencing breakdowns.
+  Adequate    : Avg OPS vs. that hand .700–.740. Can cash the edge
+                but less consistently.
+  Marginal    : Avg OPS vs. that hand .690–.700. Regression fades
+                become substantially less dependable.
+  Insufficient: Avg OPS vs. that hand below .690. Do not use as the
+                primary basis for a regression fade unless the opposing
+                pitcher profile is genuinely catastrophic.
 
-Sub-3.00 ERA with clean process profile (low barrel rate, low xwOBA
-gap) = legitimate ace. The ERA is real. Picking against them requires
-overwhelming team quality or regression evidence on the other side.
+STEP 3 — INDIVIDUAL SPLIT ALIGNMENT
+After assessing the group average, flag notable individual mismatches:
 
-Sub-3.00 ERA with a high xwOBA gap or elevated barrel rate suggests the
-ERA may overstate current performance. Consider fading when matchup
-conditions also support it.
+  Favorable   : 3+ of the top 6 batters have .800+ OPS vs. that hand.
+                Strong platoon alignment; boosts confidence in cashing
+                the pitching edge.
+  Unfavorable : 3+ of the top 6 batters have .650 OPS or below vs. that
+                hand. Meaningful platoon liability; downgrade offense one
+                tier, especially if the pitcher has strong platoon splits.
+  Neutral     : Mixed results. No material adjustment.
 
-High ERA (4.50+) with a negative xwOBA gap and low barrel rate =
-unlucky pitcher due for improvement. Don't over-fade them; their
-true talent is better than the surface ERA implies.
+Individual batter splits can be noisy in small samples. Weight the
+group average more heavily than any single outlier batter. When split
+samples are thin (early season), lean on overall season OPS as a
+stabilizing reference.
 
-High ERA (4.50+) with a positive xwOBA gap and high barrel rate usually
-indicates a legitimately weak profile. These pitchers are often reasonable
-fade candidates.
-
-If a starter's Statcast data is genuinely unavailable (debut, freshly
-called up, insufficient MLB sample): treat that matchup as higher-risk.
-Consider skipping unless the verified starter on the other side has a
-compelling, clear regression or elite profile that stands on its own.
-Never assume an unknown arm is either good or bad — treat the unknown
-as a variance wildcard that lowers pick confidence by one tier.
-
-
-PRIOR-SEASON STATCAST PROFILES
---------------------------------
-When 2026 Statcast data is unavailable for a starter, the prior season's
-contact profile is a legitimate substitute. Contact suppression tendencies
-(barrel rate, avg EV, hard-hit rate) are sticky year-over-year. A pitcher
-with a 9%+ barrel rate and +30 xwOBA gap in 2025 will very likely carry
-similar tendencies into 2026. Use prior-year data with slightly lower
-confidence but don't ignore it entirely.
+STEP 4 — RECENT FORM ADJUSTMENT
+Season splits are lagging indicators. If a team's last-10 OPS or
+recent run scoring is meaningfully above their seasonal platoon
+average, that trajectory is worth noting as a ceiling signal —
+particularly when the seasonal average is borderline adequate.
 
 
-RETURN-FROM-IL AND DEBUT STARTERS
------------------------------------
-Pitchers returning from injury (especially elbow/oblique) or making MLB
-debuts are structurally unpredictable. No process stats reliably predict
-their performance on a specific game.
+UNVERIFIED AND SPECIAL-CASE STARTERS
+--------------------------------------
+  • Debut or insufficient MLB sample: Treat as a variance wildcard.
+    Lower confidence by one tier. Pick based on the known arm.
+  • Return from IL: No process stats reliably predict performance.
+    Monitor pitch count limits (75–90 pitches early in return). Use
+    prior-season contact profile as the best available proxy.
+  • Prior-season Statcast: When 2026 data is unavailable, prior-year
+    contact tendencies (barrel rate, avg EV, hard-hit %) are sticky
+    year-over-year and are a legitimate lower-confidence substitute.
 
-Strategy: Pick based on the KNOWN starter on the other side.
-  - If the known starter has a verified regression issue → pick that team
-    regardless of the unknown arm opposite them
-  - If the known starter is verified elite → pick that team even against
-    an unknown debut
-
-For return-from-IL starters specifically:
-  - Monitor pitch count limits (typically 75-90 pitches early in return)
-  - Early exit increases reliance on bullpen → factor bullpen quality
-  - Prior-season process stats are the best available proxy
+ERA interpretation shortcuts:
+  • Sub-3.00 ERA + clean profile (low barrel, neutral/negative gap) =
+    legitimate ace. Picking against requires overwhelming evidence.
+  • Sub-3.00 ERA + high xwOBA gap or elevated barrel = smoke. Fadeable
+    when matchup conditions support it.
+  • High ERA (4.50+) + negative gap + low barrel = unlucky, due for
+    improvement. Don't over-fade.
+  • High ERA (4.50+) + positive gap + high barrel = legitimately weak.
+    Reasonable fade candidate.
 
 
 BULLPEN CONSIDERATIONS
 -----------------------
-Bullpen quality matters most in close games where the starter exits early
-or with a narrow lead. Key metrics:
+  Under 3.50  : Elite closing asset
+  3.50–4.25   : Solid
+  4.25–5.00   : Below average; notable risk in tight games
+  5.00–6.00   : Structural liability
+  Above 6.00  : Chronic problem; can override starter advantages
 
-  Average bullpen ERA:
-    Under 3.50  : Elite, a genuine closing asset
-    3.50 – 4.25 : Solid, reliable in most situations
-    4.25 – 5.00 : Below average, notable risk in tight games
-    5.00 – 6.00 : Bad, structural liability
-    Above 6.00  : Chronic problem, can override pitching advantages
-                  in close games and should weigh heavily against picks
-
-Bullpen fatigue: Arms that threw 30+ pitches the previous day are
-effectively unavailable. Note how many key relievers pitched yesterday
-and at what pitch counts. A bullpen with 4-5 arms used the prior day
-is meaningfully weakened regardless of its average ERA.
-
-The Toronto chronic bullpen problem: A team with a 6.00+ ERA bullpen is
-structurally difficult to pick even with a great starter. The drag is
-meaningful but not an automatic disqualifier — weigh it against starter
-projected innings, opposing offense level, and whether the opposing
-bullpen is equally compromised.
+Fatigue: Note how many key relievers (closer, primary setup, key bridge)
+pitched yesterday. 3+ high-leverage arms used = meaningful drain
+regardless of season ERA.
 
 
-TEAM QUALITY FLOOR
--------------------
-Elite teams (top 5 in record, .780+ OPS, sub-3.50 bullpen ERA) have a
-floor that absorbs bad pitching performances. They find ways to win
-even when their starter struggles.
+RAIN RULES
+-----------
+  • Full postponement = free win (pick the better team)
+  • Delay only = ignore rain as a factor
+  • Confirmed postponement overrides all probability flags
 
-Indicators of a reliable team quality floor:
-  • Season win percentage above .620
-  • Team OPS above .780
-  • Bullpen average ERA below 3.50
-  • 7-3 or better in their last 10
+Roofed venues (rain irrelevant): T-Mobile Park, Globe Life Field,
+Tropicana Field, Chase Field, Rogers Centre, Minute Maid Park,
+American Family Field, loanDepot Park.
 
-Teams meeting all four criteria should receive a substantial confidence
-boost when facing confirmed regression candidates, even if their own
-starter is mediocre. The offense and bullpen will compensate.
-
-Teams with elite records but weak offenses (.680 OPS or lower despite
-good records) do NOT have the same floor. Their wins are likely
-pitching-driven, making them more vulnerable to variance.
+Use roofed venues as tiebreakers when rain is a concern elsewhere.
 
 
-GAME-SELECTION HIERARCHY
---------------------------
-In order of confidence:
-
-TIER 1 — HIGH CONFIDENCE (pick these)
-  • Verified elite starter (low barrel rate, clean xwOBA, low FIP/xERA)
-    vs confirmed regression candidate (high xwOBA gap or high barrel rate)
-  • Opposing offense has .720+ OPS to cash the edge
-
-TIER 2 — MODERATE CONFIDENCE (consider with caveats)
-  • Strong team quality floor facing unverified but plausible bad pitcher
-  • Win streak team with a WHIP trigger on opposing starter
-  • Both starters verified decent but one team has meaningfully better
-    bullpen and offense
-
-TIER 3 — SPECULATIVE (approach with caution)
-  • Picking against high barrel rate pitcher with team below .720 OPS
-  • Unverified starters on either side
-  • Both starters have active opposing xwOBA gaps (bidirectional coin flip)
-
-SKIP THESE:
-  • Both starters have ERA above 5.50 (genuine mess, unpredictable)
-  • Both starters have WHIP above 1.60 (bidirectional regression bomb)
-  • Two bad teams (both below .450 win pct) with no process edge
-
-
-SPECIFIC PITCHER PATTERNS TO TRACK
--------------------------------------
-These patterns emerged repeatedly and should be monitored ongoing:
-
-  Foster Griffin  : +48 xwOBA gap persisted 4+ starts without correcting.
-                    Run 2026 Statcast before fading again.
-
-  Toronto bullpen : Chronic 6.00+ ERA all month. Significant drag on
-                    any pick involving them unless the starter projects
-                    to go deep and the opposing offense is very weak.
-
+SPECIFIC PATTERNS TO TRACK
+----------------------------
+  Foster Griffin  : +48 xwOBA gap persisted 4+ starts. Run fresh
+                    Statcast before fading again.
+  Toronto bullpen : Chronic 6.00+ ERA. Significant drag on any pick
+                    unless starter projects deep innings and opposing
+                    offense is weak.
   Cam Schlittler  : One of the strongest verified arms in the dataset.
-                    NYY should receive a meaningful confidence boost when
-                    he starts unless the opposing starter is also verified elite.
-
-  Trey Yesavage   : 17.9% hard-hit rate, 3.6% barrel, -74 xwOBA gap —
-                    the best single-game contact profile verified.
-                    Workload/pitch count limits apply (building back from IL).
-
-  WHIP model      : Any starter with 1.50+ WHIP against a .730+ OPS
-                    offense should be treated as a meaningful regression warning sign.
+                    NYY gets a meaningful confidence boost when he starts.
+  Trey Yesavage   : 17.9% hard-hit rate, 3.6% barrel, -74 xwOBA gap.
+                    Best single-game contact profile verified. Pitch
+                    count limits apply (building back from IL).
 
 
-
-CONFIDENCE EVALUATION — OPPOSING SIDE PRESSURE THEN EDGE SCORING
-------------------------------------------------------------------
-Evaluation runs in two stages. Stage 1 assesses how much resistance the
-opposing side presents. Stage 2 scores the strength of the edge on the
-side being picked. A strong team or strong pitcher on the opposing side
-is NOT additive evidence for your pick — it is countervailing pressure
-that belongs in Stage 1, not Stage 2. Nothing in Stage 1 automatically
-kills a pick; everything is a signal to weigh against your edge.
-
-
-STAGE 1 — OPPOSING SIDE PRESSURE (check what you're picking against)
-----------------------------------------------------------------------
-Each condition below raises the bar for the edge you need in Stage 2.
-No single condition here is a hard stop. Instead, count how many apply
-and consider how severely — more pressure requires a stronger edge to
-justify the pick.
+================================================================
+STAGE 1 — OPPOSING SIDE PRESSURE
+================================================================
+Inventory what you're picking against. Nothing here is an automatic
+stop — count how many apply and how severely. More pressure requires
+a stronger Stage 2 edge to justify the pick.
 
 PITCHER RESISTANCE
-  • Opposing starter is verified elite (xERA sub-3.00, barrel below 6%,
-    neutral or negative xwOBA gap). A legitimate ace significantly raises
-    the bar. A regression-fade pick into a verified ace requires either
-    an overwhelming team quality edge or clear smoke on your own starter's
-    side. The cleaner the opposing profile, the less justified the fade.
-  • Opposing starter is moderate-quality but clean (xERA 3.00–3.75,
-    barrel below 9%, neutral gap). Real resistance — your edge needs to
-    be clear and multi-layered, not marginal.
+  • Verified elite (xERA sub-3.00, barrel below 6%, neutral/negative gap):
+    Significant bar-raiser. Requires overwhelming team edge or clear smoke
+    on your starter to proceed.
+  • Moderate-quality verified (xERA 3.00–3.75, barrel below 9%):
+    Real resistance. Your edge needs to be clear, not marginal.
 
 TEAM RESISTANCE
-  • Opposing team OPS above .780. Elite offenses can overcome bad pitching
-    performances and neutralize regression advantages. The higher above
-    .780, the more this matters.
-  • Opposing team is 7-3 or better in their last 10 AND has a .750+ OPS.
-    Hot, dangerous teams are running well across all phases and absorb
-    unfavorable game scripts.
-  • Opposing bullpen ERA below 3.00. An elite pen preserves narrow leads
-    even when the starter struggles, compressing the ceiling on a
-    regression outcome.
+  • Opposing team platoon OPS above .780 vs. your starter's hand:
+    Elite offenses neutralize regression advantages.
+  • Opposing team 7-3 or better last 10 AND .750+ platoon OPS:
+    Hot team running on all phases.
+  • Opposing bullpen ERA below 3.00: Compresses regression ceiling even
+    when the starter struggles.
+  • "Juggernaut" teams (Dodgers etc.): Offensive ceiling is effectively
+    limitless. Treat with extra caution.
 
 STRUCTURAL UNCERTAINTY
-  • Bidirectional regression: both starters have active xwOBA gaps above
-    15 points in opposing directions. Whichever pitcher corrects first
-    determines the game — team quality is a weaker signal here.
-  • Your side's starter is unverified (NaN, debut, or insufficient sample).
-    Picking based on the opposing regression candidate alone is viable but
-    confidence should be lower.
-  • Both starters unverified. No process edge can be established on either
-    side. Requires an unusually strong team quality argument to proceed.
-
-After inventorying Stage 1 pressure, proceed to Stage 2. The more Stage 1
-resistance present, the stronger your Stage 2 edge needs to be to reach
-High or Moderate confidence.
+  • Convergent regression (both xwOBA gaps above 15 pts in opposing
+    directions): Coin-flip variance. Strong team quality argument required.
+  • Your starter unverified: Lower confidence by one tier regardless of
+    opposing regression evidence.
+  • Both starters unverified: No process edge. Lean toward skipping.
 
 
-STAGE 2 — EDGE SCORING (evaluate the side being picked)
---------------------------------------------------------
-Score only the strength of the edge on your side. This is not cumulative
-quality — it measures how clearly the conditions favor a win for your pick.
+================================================================
+STAGE 2 — EDGE SCORING (your side)
+================================================================
+Score only the strength of the edge on the side you're picking.
 
-PITCHING EDGE (opposing starter's vulnerability)
-  Strong  : Opposing starter has xwOBA gap above +40, barrel above 12%,
-            or xERA more than 1.5 runs above surface ERA. Clear fade target.
-  Moderate: Opposing starter has xwOBA gap +15 to +40, barrel 9–12%,
-            or xERA 0.75–1.50 above surface ERA. Real but not extreme edge.
-  Weak    : Opposing starter has mild indicators only. Edge exists but
-            is not the primary reason for the pick.
+PITCHING EDGE
+  Strong  : Opposing starter xwOBA gap above +40, barrel above 12%,
+            or xERA more than 1.5 runs above surface ERA.
+  Moderate: xwOBA gap +15 to +40, barrel 9–12%, or xERA 0.75–1.50
+            above surface ERA.
+  Weak    : Mild indicators only. Edge exists but is not the primary
+            reason for the pick.
 
-OFFENSE THRESHOLD (can your side cash the edge?)
-  Strong  : Team OPS above .740. Reliably punishes regression and
-            sequencing breakdowns.
-  Adequate: Team OPS .700–.740. Can cash the edge but less consistently.
-  Marginal: Team OPS .690–.700. Below the reliable threshold; regression
-            fade picks become substantially less dependable.
-  Insufficient: Team OPS below .690. Do not use as the primary basis
-            for a regression fade unless opposing pitcher profile is
-            genuinely catastrophic.
+OFFENSE EDGE (platoon-adjusted — see OFFENSE EVALUATION section)
+  Strong      : Avg OPS vs. pitcher hand .740+
+  Adequate    : Avg OPS vs. pitcher hand .700–.740
+  Marginal    : Avg OPS vs. pitcher hand .690–.700
+  Insufficient: Avg OPS vs. pitcher hand below .690
+
+  Apply individual alignment modifier (Step 2) to upgrade or downgrade
+  one tier based on how many of the top 6 batters are favorable or
+  unfavorable vs. that hand.
 
 SUPPORTING CONTEXT
-  Boost : Team is 7-3 or better last 10, or on a W3+ streak. Recent
-          form adds floor when pitching edge is moderate.
-  Boost : Your bullpen ERA below 3.50. Holds narrow leads; reduces
-          variance in close games.
-  Drain : Your bullpen ERA above 5.50. Structural liability that can
-          erase a starter advantage.
-  Drain : 4+ bullpen arms used yesterday. Meaningful fatigue regardless
-          of season ERA.
-  Drain : Your team on an L4+ streak. Negative momentum is real.
+  Boost : Team 7-3 or better last 10, or W3+ streak
+  Boost : Your bullpen ERA below 3.50
+  Drain : Your bullpen ERA above 5.50
+  Drain : 3+ high-leverage arms used yesterday
+  Drain : Your team on L4+ streak
 
-CONFIDENCE TIERS (based on Stage 2 edge vs Stage 1 pressure)
-  High      : Strong pitching edge AND strong offense threshold, with
-              at least one supporting boost, no drains, and light
-              Stage 1 pressure (no verified elite arm, no elite offense).
-  Moderate  : Strong pitching edge with marginal offense, OR moderate
-              pitching edge with strong offense. Some Stage 1 pressure
-              present but clearly outweighed by the edge.
-  Low       : Weak pitching edge, one or more active drains, or
-              meaningful Stage 1 pressure that is only partially offset.
-              Proceed cautiously or look for a better game.
-  Skip      : No clear edge can be established, or Stage 1 pressure is
-              heavy on multiple dimensions with only a marginal Stage 2
-              edge to show against it. Includes both starters unverified
-              with no strong team quality argument.
-
-The tier reflects the net balance of edge versus resistance, not the
-absolute quality of either team. A moderate edge into light resistance
-can be High confidence. A strong edge into heavy resistance may only
-reach Moderate. When Stage 1 pressure is severe, ask honestly whether
-the edge is real enough to overcome it — if the answer is uncertain,
-treat it as Low or Skip.
-
-
-SUMMARY CHECKLIST — PRE-GAME VERIFICATION
--------------------------------------------
-Before finalizing any pick, work through Stage 1 then Stage 2.
-
-STAGE 1 — OPPOSING SIDE PRESSURE (inventory what you're picking against)
-  □ Is the opposing starter verified elite? (xERA sub-3.00, barrel below
-    6%, neutral or negative xwOBA gap) → Significant resistance. Note it
-    and assess whether your Stage 2 edge is strong enough to justify.
-  □ Is the opposing starter moderate-quality verified? (xERA 3.00–3.75,
-    barrel below 9%) → Real but manageable resistance. Note it.
-  □ Is the opposing team OPS above .780? → Raises the bar on offense
-    threshold needed in Stage 2.
-  □ Is the opposing team 7-3 or better last 10 AND above .750 OPS?
-    → Hot team running on all phases. Note it.
-  □ Is the opposing bullpen ERA below 3.00? → Compresses regression
-    ceiling. Note it.
-  □ Is this a convergent regression game? (both starters' xwOBA gaps
-    above 15 pts in opposing directions) → Elevated variance. Coin-flip
-    risk — requires unusually strong team quality argument to proceed.
-  □ The "Juggernaut" Safety Valve (Avoid the Trap). Teams like the Dodgers 
-    often have "limitless" offensive ceilings.
-  □ Is your starter unverified? → Lowers confidence regardless of
-    opposing regression evidence. Note it.
-  □ Are both starters unverified? → No process edge. Requires strong
-    team quality argument. Lean toward skipping.
-
-STAGE 2 — EDGE SCORING (your side)
-  □ Both starters fully verified via fresh Statcast search?
-    (required for ALL starters — stats change throughout the season;
-    prior checks are not current)
-  □ Opposing starter's xwOBA gap assessed (strong/moderate/weak edge)
-  □ Opposing starter's barrel rate and xERA gap assessed
-  □ WHIP on opposing starter noted (1.50+ = additional fade flag)
-  □ Your team OPS assessed (strong/adequate/marginal/insufficient)
-  □ Your team's recent form noted (7-3 or better = boost)
-  □ Your bullpen ERA and yesterday's usage checked (drain if 3+ 
-    high-leverage arms pitched yesterday (closer, primary setup, 
-    key bridge relievers))
-  □ Your team's streak noted (L4+ = drain)
-  □ Rain flag checked — above 40%? If so, check NWS game-window
-  □ Is this a roofed venue? (weather irrelevant if yes)
-  □ Are either starters returning from IL or making MLB debuts?
-    (treat as higher variance — pick based on the known arm)
+CONFIDENCE TIERS
+  High     : Strong pitching edge + strong offense, at least one boost,
+             no drains, light Stage 1 pressure.
+  Moderate : Strong pitching edge with marginal offense, OR moderate
+             edge with strong offense. Some Stage 1 pressure but clearly
+             outweighed.
+  Low      : Weak pitching edge, active drains, or Stage 1 pressure only
+             partially offset. Proceed cautiously.
+  Skip     : No clear edge, or heavy Stage 1 pressure with only a marginal
+             Stage 2 edge. Both starters unverified with no team quality
+             argument.
 
 ================================================================
 END OF FRAMEWORK
