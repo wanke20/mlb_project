@@ -4,31 +4,32 @@
 
 {% block content %}
 {% load tz %}
+{% load team_logos %}
 <h1>Team Trends</h1>
 <p class="subtitle">Updated nightly &mdash; click any column header to sort &mdash; {% timezone "America/New_York" %}{% now "F jS, Y" %}{% endtimezone %}</p>
 
-<div class="table-scroll">
+<div class="table-scroll condensed">
 <table id="trends-table">
     <thead>
         <tr>
             <th>#</th>
             <th class="sortable" data-col="1" data-type="text">Team</th>
             <th class="sortable" data-col="2" data-type="record">Record</th>
-            <th class="sortable" data-col="3" data-type="streak">Streak</th>
-            <th class="sortable" data-col="4" data-type="record">Last 10</th>
-            <th class="sortable" data-col="5" data-type="num">Last 7 AVG</th>
-            <th class="sortable" data-col="6" data-type="num">Last 7 Runs</th>
-            <th class="sortable" data-col="7" data-type="num">Season AVG</th>
-            <th class="sortable" data-col="8" data-type="num">Season OPS</th>
-            <th class="sortable" data-col="9" data-type="num">Season Runs</th>
-            <th class="sortable" data-col="10" data-type="num">Season SO</th>
+            <th class="sortable" data-col="3" data-type="streak"><span class="hide-mobile">Streak</span><span class="show-mobile">Strk</span></th>
+            <th class="sortable" data-col="4" data-type="record"><span class="hide-mobile">Last 10</span><span class="show-mobile">L10</span></th>
+            <th class="sortable" data-col="5" data-type="num"><span class="hide-mobile">Last 7 AVG</span><span class="show-mobile">L7 AVG</span></th>
+            <th class="sortable" data-col="6" data-type="num"><span class="hide-mobile">Last 7 Runs</span><span class="show-mobile">L7 R</span></th>
+            <th class="sortable" data-col="7" data-type="num"><span class="hide-mobile">Season AVG</span><span class="show-mobile">AVG</span></th>
+            <th class="sortable" data-col="8" data-type="num"><span class="hide-mobile">Season OPS</span><span class="show-mobile">OPS</span></th>
+            <th class="sortable" data-col="9" data-type="num"><span class="hide-mobile">Season Runs</span><span class="show-mobile">R</span></th>
+            <th class="sortable" data-col="10" data-type="num"><span class="hide-mobile">Season SO</span><span class="show-mobile">SO</span></th>
         </tr>
     </thead>
     <tbody>
         {% for team in teams %}
         <tr>
             <td>{{ forloop.counter }}</td>
-            <td><strong>{{ team.name }}</strong></td>
+            <td class="team-col"><strong class="hide-mobile">{{ team.name }}</strong><strong class="show-mobile">{{ team|logo_abbr|upper|default:team.name }}</strong></td>
             <td>{{ team.wins }}-{{ team.losses }}</td>
 
             <td>

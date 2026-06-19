@@ -669,6 +669,10 @@ tbody tr:hover td { background: var(--surface-hover); }
 /* Mobile-only abbreviated header text (e.g. "Yest."); hidden on desktop where
    the full .hdr-extra label shows instead. */
 .hdr-abbr { display: none; }
+/* General full/short swap: .show-mobile is hidden until the narrow breakpoint,
+   .hide-mobile disappears there. Used to substitute short labels/abbreviations
+   on phones without touching the desktop markup or JS. */
+.show-mobile { display: none; }
 
 /* ---- Responsive ------------------------------------------------------- */
 @media (max-width: 860px) {
@@ -802,10 +806,12 @@ tbody tr:hover td { background: var(--surface-hover); }
        vertical team label that costs ~one character of width. overflow-x stays
        auto (inherited) as a safety net on extremely narrow screens. */
     .condensed table { width: 100%; font-size: 11px; }
-    .condensed th, .condensed td { padding: 6px 3px; white-space: nowrap; }
+    .condensed th, .condensed td { padding: 6px 2px; white-space: nowrap; }
     .condensed th { font-size: 10px; letter-spacing: 0; }
     .condensed .hdr-extra { display: none; }   /* drop "(AVG / OPS)", "Yesterday" */
     .condensed .hdr-abbr  { display: inline; }  /* show "Yest." */
+    .condensed .hide-mobile { display: none; }
+    .condensed .show-mobile { display: inline; }
     .condensed .pa-note   { display: none; }     /* drop the "(72 PA)" annotation */
     /* Rotate the rowspan team label vertical so the column is ~1 char wide. */
     .condensed .team-cell { width: 1%; padding: 4px 2px; text-align: center; vertical-align: middle; }
@@ -823,4 +829,8 @@ tbody tr:hover td { background: var(--surface-hover); }
     /* Platoon split cells wrap their "AVG / OPS" onto two lines so each stays
        narrow; centered so the slash reads as a stack. */
     .condensed .split { white-space: normal; text-align: center; min-width: 40px; line-height: 1.3; }
+
+    /* --- Weather table: 3 columns; let everything wrap and shrink slightly --- */
+    .wx table { font-size: 12.5px; }
+    .wx th, .wx td { padding: 9px 7px; white-space: normal; line-height: 1.3; }
 }
