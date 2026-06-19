@@ -135,7 +135,7 @@
 </div>
 
 <div class="section-heading">Matchup Summary</div>
-<div class="table-scroll">
+<div class="table-scroll cmp" style="--rows:10">
 <table>
     <thead>
         <tr>
@@ -251,7 +251,7 @@
 </div>
 
 <div class="section-heading">Advanced Pitching Metrics</div>
-<div class="table-scroll">
+<div class="table-scroll cmp" style="--rows:8">
 <table>
     <thead>
         <tr>
@@ -292,7 +292,7 @@
 
 {% if away_hitters or home_hitters %}
 <div class="section-heading">Top Hitters &amp; Platoon Splits</div>
-<div class="table-scroll">
+<div class="table-scroll stacked">
 <table>
     <thead>
         <tr>
@@ -310,18 +310,18 @@
         {% for h in away_hitters %}
         <tr class="away-row">
             {% if forloop.first %}<td rowspan="{{ away_hitters|length }}">{{ game.away_team.name }} <span class="team-badge badge-away">Away</span></td>{% endif %}
-            <td>{{ h.name }}</td>
-            <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>
+            <td data-label="Hitter">{{ h.name }}</td>
+            <td data-label="Bats">{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="PA">{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="AVG">{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="OPS">{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="vs LHP (AVG / OPS)">
                 {% if h.vs_l_avg or h.vs_l_ops %}
                     {{ h.vs_l_avg|default:"—" }} / {{ h.vs_l_ops|default:"—" }}
                     {% if h.vs_l_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_l_pa }} PA)</span>{% endif %}
                 {% else %}<span class="na">—</span>{% endif %}
             </td>
-            <td>
+            <td data-label="vs RHP (AVG / OPS)">
                 {% if h.vs_r_avg or h.vs_r_ops %}
                     {{ h.vs_r_avg|default:"—" }} / {{ h.vs_r_ops|default:"—" }}
                     {% if h.vs_r_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_r_pa }} PA)</span>{% endif %}
@@ -332,18 +332,18 @@
         {% for h in home_hitters %}
         <tr class="home-row">
             {% if forloop.first %}<td rowspan="{{ home_hitters|length }}">{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>{% endif %}
-            <td>{{ h.name }}</td>
-            <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>
+            <td data-label="Hitter">{{ h.name }}</td>
+            <td data-label="Bats">{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="PA">{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="AVG">{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="OPS">{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-label="vs LHP (AVG / OPS)">
                 {% if h.vs_l_avg or h.vs_l_ops %}
                     {{ h.vs_l_avg|default:"—" }} / {{ h.vs_l_ops|default:"—" }}
                     {% if h.vs_l_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_l_pa }} PA)</span>{% endif %}
                 {% else %}<span class="na">—</span>{% endif %}
             </td>
-            <td>
+            <td data-label="vs RHP (AVG / OPS)">
                 {% if h.vs_r_avg or h.vs_r_ops %}
                     {{ h.vs_r_avg|default:"—" }} / {{ h.vs_r_ops|default:"—" }}
                     {% if h.vs_r_pa %}<span style="color: var(--text-muted); font-size: 11px;"> ({{ h.vs_r_pa }} PA)</span>{% endif %}
@@ -358,7 +358,7 @@
 
 {% if game.home_score is not None %}
 <div class="section-heading">Game Result</div>
-<div class="table-scroll">
+<div class="table-scroll cmp" style="--rows:5">
 <table>
     <thead>
         <tr>
@@ -465,7 +465,7 @@ makeChart('totalChart', totalChartData, '#3ddc97');
 
 {% if away_relievers or home_relievers %}
 <div class="section-heading">Bullpen Usage</div>
-<div class="table-scroll">
+<div class="table-scroll stacked">
 <table>
     <thead>
         <tr>
@@ -482,9 +482,9 @@ makeChart('totalChart', totalChartData, '#3ddc97');
         {% for r in away_relievers %}
         <tr class="away-row">
             {% if forloop.first %}<td rowspan="{{ away_relievers|length }}">{{ game.away_team.name }} <span class="team-badge badge-away">Away</span></td>{% endif %}
-            <td>{{ r.name }}</td>
-            <td>{{ r.season_appearances }}</td>
-            <td>
+            <td data-label="Reliever">{{ r.name }}</td>
+            <td data-label="App">{{ r.season_appearances }}</td>
+            <td data-label="ERA">
                 {% if r.era is not None %}
                     {% if r.era < 3.0 %}<span class="era-elite">{{ r.era }}</span>
                     {% elif r.era < 4.0 %}<span class="era-good">{{ r.era }}</span>
@@ -494,9 +494,9 @@ makeChart('totalChart', totalChartData, '#3ddc97');
                     {% endif %}
                 {% else %}<span class="na">—</span>{% endif %}
             </td>
-            <td>{{ r.saves }}</td>
-            <td>{{ r.holds }}</td>
-            <td>
+            <td data-label="SV">{{ r.saves }}</td>
+            <td data-label="HLD">{{ r.holds }}</td>
+            <td data-label="Pitched Yesterday">
                 {% if r.pitched_yesterday %}
                     <span style="color: #f9e2af; font-weight: 600;">Yes — {{ r.yesterday_pitches }}p</span>
                 {% else %}
@@ -508,9 +508,9 @@ makeChart('totalChart', totalChartData, '#3ddc97');
         {% for r in home_relievers %}
         <tr class="home-row">
             {% if forloop.first %}<td rowspan="{{ home_relievers|length }}">{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>{% endif %}
-            <td>{{ r.name }}</td>
-            <td>{{ r.season_appearances }}</td>
-            <td>
+            <td data-label="Reliever">{{ r.name }}</td>
+            <td data-label="App">{{ r.season_appearances }}</td>
+            <td data-label="ERA">
                 {% if r.era is not None %}
                     {% if r.era < 3.0 %}<span class="era-elite">{{ r.era }}</span>
                     {% elif r.era < 4.0 %}<span class="era-good">{{ r.era }}</span>
@@ -520,9 +520,9 @@ makeChart('totalChart', totalChartData, '#3ddc97');
                     {% endif %}
                 {% else %}<span class="na">—</span>{% endif %}
             </td>
-            <td>{{ r.saves }}</td>
-            <td>{{ r.holds }}</td>
-            <td>
+            <td data-label="SV">{{ r.saves }}</td>
+            <td data-label="HLD">{{ r.holds }}</td>
+            <td data-label="Pitched Yesterday">
                 {% if r.pitched_yesterday %}
                     <span style="color: #f9e2af; font-weight: 600;">Yes — {{ r.yesterday_pitches }}p</span>
                 {% else %}

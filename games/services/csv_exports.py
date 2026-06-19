@@ -14,6 +14,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from games.models import Game, Hitter, Reliever
+from games.templatetags.team_logos import logo_abbr
 
 
 def resolve_date(day_param):
@@ -74,7 +75,7 @@ def build_games_csv(target_date):
             if game.start_time_utc else ""
         )
         away, home = game.away_team, game.home_team
-        ap, hp = game.away_pitcher, game.home_pitcher
+        ap, hp = game.away_pitcher, game.home_pitcher 
 
         try:
             w = game.weather
@@ -97,8 +98,8 @@ def build_games_csv(target_date):
             away.win_pct, home.win_pct,
             away.season_avg, home.season_avg,
             away.season_ops, home.season_ops,
-            f"{ap.name} ({away.abbreviation or away.name})" if ap else "",
-            f"{hp.name} ({home.abbreviation or home.name})" if hp else "",
+            f"{ap.name} ({logo_abbr(away).upper() or away.name})" if ap else "",
+            f"{hp.name} ({logo_abbr(home).upper() or home.name})" if hp else "",
             ap.throws if ap else "", hp.throws if hp else "",
             ap.era if ap else "", hp.era if hp else "",
             ap.whip if ap else "", hp.whip if hp else "",

@@ -742,3 +742,104 @@ tbody tr:hover td { background: var(--surface-hover); }
     .chat-msg { max-width: 92%; }
     .pick-btn { min-width: 100%; }
 }
+
+/* ---- Mobile: reflow wide tables so nothing scrolls sideways ------------ */
+/* Two complementary patterns, opted into per-table via a class on the
+   .table-scroll wrapper:
+     .cmp     — Away-vs-Home comparison tables. Transposed so stat names run
+                down the left and the two teams become side-by-side columns.
+                Needs --rows set to the table's column count (it becomes the
+                number of grid rows once transposed).
+     .stacked — player-list tables (hitters, bullpen). Each row becomes a
+                card of label/value pairs; the rowspan team cell heads its
+                group. */
+@media (max-width: 860px) {
+    /* --- Transposed comparison tables --- */
+    .table-scroll.cmp { overflow: visible; border-radius: 0; -webkit-overflow-scrolling: auto; }
+    .cmp table {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-rows: repeat(var(--rows, 6), auto);
+        grid-template-columns: minmax(0, max-content) 1fr 1fr;
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+    /* Flatten the table internals so every th/td is a direct grid item.
+       Document order (all headers, then away cells, then home cells) plus
+       grid-auto-flow:column lines each stat up across its three cells. */
+    .cmp thead, .cmp tbody, .cmp tr { display: contents; }
+    .cmp th, .cmp td {
+        border: 0;
+        border-bottom: 1px solid var(--border-soft);
+        padding: 10px 14px;
+        text-align: right;
+        white-space: normal;
+        word-break: break-word;
+    }
+    /* Column 1: the stat labels (originally the header row). */
+    .cmp th {
+        text-align: left;
+        background: var(--bg-soft);
+        font-size: 12px;
+        color: var(--text-muted);
+    }
+    /* Drop the desktop away/home left-accent in transposed mode. */
+    .cmp tr.away-row td:first-child,
+    .cmp tr.home-row td:first-child { border-left: 0; }
+    /* Faintly tint the value columns so each team reads as a unit. */
+    .cmp tr.away-row td { background: rgba(137, 180, 250, 0.05); }
+    .cmp tr.home-row td { background: rgba(166, 227, 161, 0.05); }
+    /* No trailing border on the last visual row (bottom cell of each column). */
+    .cmp th:last-child,
+    .cmp tbody tr td:last-child { border-bottom: 0; }
+
+    /* --- Stacked player-list cards --- */
+    .table-scroll.stacked { overflow: visible; border-radius: 0; -webkit-overflow-scrolling: auto; }
+    .stacked table { display: block; width: 100%; }
+    .stacked thead { display: none; }
+    .stacked tbody { display: block; }
+    .stacked tr {
+        display: block;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 12px;
+        padding: 4px 14px;
+    }
+    .stacked td {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 16px;
+        border: 0;
+        border-bottom: 1px solid var(--border-soft);
+        padding: 9px 0;
+        text-align: right;
+    }
+    .stacked tr td:last-child { border-bottom: 0; }
+    .stacked td::before {
+        content: attr(data-label);
+        text-align: left;
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+    /* The rowspan team cell heads its group instead of being a label/value. */
+    .stacked td[rowspan] {
+        display: block;
+        text-align: left;
+        font-size: 15px;
+        font-weight: 600;
+        padding: 6px 0 10px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 2px;
+    }
+    .stacked tr.away-row td:first-child,
+    .stacked tr.home-row td:first-child { border-left: 0; }
+    .stacked td[rowspan]::before { content: none; }
+}

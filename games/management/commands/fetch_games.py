@@ -137,11 +137,13 @@ class Command(BaseCommand):
         fetch_dates = [today, tomorrow]
         total_games = 0
 
-        with transaction.atomic():
-            deleted_games, _ = Game.objects.filter(date__in=fetch_dates).delete()
-            self.stdout.write(
-                self.style.WARNING(f"Removed {deleted_games} existing games before refresh.")
-            )
+        # Track every game_id we see in the fresh schedule so we can prune
+        # only the games that have actually dropped off (cancelled/rescheduled)
+        # AFTER the upsert. We deliberately do NOT bulk-delete games up front:
+        # Pick and WeatherData cascade-delete with their Game, so a blanket
+        # delete would wipe user picks and weather every run. update_or_create
+        # below keeps existing games (and their related rows) intact.
+        fetched_game_ids = set()
 
         for fetch_date in fetch_dates:
             try:
@@ -155,6 +157,7 @@ class Command(BaseCommand):
 
                 for game in d.get("games", []):
                     game_id = game["gamePk"]
+                    fetched_game_ids.add(game_id)
                     game_start_utc = parse_datetime(game.get("gameDate")) if game.get("gameDate") else None
 
                     # -----------------------
@@ -241,6 +244,19 @@ class Command(BaseCommand):
                     )
 
                     total_games += 1
+
+        # Prune only games that have dropped off the schedule for these dates
+        # (e.g. cancelled or rescheduled). Games that still exist are left
+        # untouched, so their picks and weather survive the refresh.
+        with transaction.atomic():
+            stale_games = Game.objects.filter(date__in=fetch_dates).exclude(
+                game_id__in=fetched_game_ids
+            )
+            deleted_games, _ = stale_games.delete()
+        if deleted_games:
+            self.stdout.write(
+                self.style.WARNING(f"Removed {deleted_games} stale games no longer on the schedule.")
+            )
 
         self.stdout.write(
             self.style.SUCCESS(f"Successfully updated {total_games} games.")
