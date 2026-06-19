@@ -666,6 +666,9 @@ tbody tr:hover td { background: var(--surface-hover); }
     border-radius: var(--radius);
 }
 .table-scroll table { margin-bottom: 0; }
+/* Mobile-only abbreviated header text (e.g. "Yest."); hidden on desktop where
+   the full .hdr-extra label shows instead. */
+.hdr-abbr { display: none; }
 
 /* ---- Responsive ------------------------------------------------------- */
 @media (max-width: 860px) {
@@ -744,15 +747,13 @@ tbody tr:hover td { background: var(--surface-hover); }
 }
 
 /* ---- Mobile: reflow wide tables so nothing scrolls sideways ------------ */
-/* Two complementary patterns, opted into per-table via a class on the
-   .table-scroll wrapper:
-     .cmp     — Away-vs-Home comparison tables. Transposed so stat names run
-                down the left and the two teams become side-by-side columns.
-                Needs --rows set to the table's column count (it becomes the
-                number of grid rows once transposed).
-     .stacked — player-list tables (hitters, bullpen). Each row becomes a
-                card of label/value pairs; the rowspan team cell heads its
-                group. */
+/* Opt-in per-table via a class on the .table-scroll wrapper:
+     .cmp — Away-vs-Home comparison tables. Transposed so stat names run down
+            the left and the two teams become side-by-side columns. Needs
+            --rows set to the table's column count (it becomes the number of
+            grid rows once transposed).
+   Player-list tables (hitters, bullpen) intentionally keep the desktop
+   horizontal-scroll layout — they are not opted in. */
 @media (max-width: 860px) {
     /* --- Transposed comparison tables --- */
     .table-scroll.cmp { overflow: visible; border-radius: 0; -webkit-overflow-scrolling: auto; }
@@ -795,51 +796,31 @@ tbody tr:hover td { background: var(--surface-hover); }
     .cmp th:last-child,
     .cmp tbody tr td:last-child { border-bottom: 0; }
 
-    /* --- Stacked player-list cards --- */
-    .table-scroll.stacked { overflow: visible; border-radius: 0; -webkit-overflow-scrolling: auto; }
-    .stacked table { display: block; width: 100%; }
-    .stacked thead { display: none; }
-    .stacked tbody { display: block; }
-    .stacked tr {
-        display: block;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        margin-bottom: 12px;
-        padding: 4px 14px;
-    }
-    .stacked td {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: 16px;
-        border: 0;
-        border-bottom: 1px solid var(--border-soft);
-        padding: 9px 0;
-        text-align: right;
-    }
-    .stacked tr td:last-child { border-bottom: 0; }
-    .stacked td::before {
-        content: attr(data-label);
-        text-align: left;
-        color: var(--text-muted);
-        font-size: 11px;
+    /* --- Condensed player-list tables --- */
+    /* Keep one row per player but shrink everything so it fits without a
+       sideways scroll: tiny type, tight cells, dropped secondary text, and a
+       vertical team label that costs ~one character of width. overflow-x stays
+       auto (inherited) as a safety net on extremely narrow screens. */
+    .condensed table { width: 100%; font-size: 11px; }
+    .condensed th, .condensed td { padding: 6px 3px; white-space: nowrap; }
+    .condensed th { font-size: 10px; letter-spacing: 0; }
+    .condensed .hdr-extra { display: none; }   /* drop "(AVG / OPS)", "Yesterday" */
+    .condensed .hdr-abbr  { display: inline; }  /* show "Yest." */
+    .condensed .pa-note   { display: none; }     /* drop the "(72 PA)" annotation */
+    /* Rotate the rowspan team label vertical so the column is ~1 char wide. */
+    .condensed .team-cell { width: 1%; padding: 4px 2px; text-align: center; vertical-align: middle; }
+    .condensed .team-cell .team-name {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        display: inline-block;
+        font-size: 10px;
         font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
         white-space: nowrap;
     }
-    /* The rowspan team cell heads its group instead of being a label/value. */
-    .stacked td[rowspan] {
-        display: block;
-        text-align: left;
-        font-size: 15px;
-        font-weight: 600;
-        padding: 6px 0 10px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 2px;
-    }
-    .stacked tr.away-row td:first-child,
-    .stacked tr.home-row td:first-child { border-left: 0; }
-    .stacked td[rowspan]::before { content: none; }
+    .condensed .team-cell .team-badge { display: none; }
+    /* Let long player names wrap rather than forcing the table wide. */
+    .condensed .player-name { white-space: normal; min-width: 76px; line-height: 1.25; }
+    /* Platoon split cells wrap their "AVG / OPS" onto two lines so each stays
+       narrow; centered so the slash reads as a stack. */
+    .condensed .split { white-space: normal; text-align: center; min-width: 40px; line-height: 1.3; }
 }
