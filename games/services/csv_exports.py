@@ -82,9 +82,12 @@ def build_games_csv(target_date):
             w = game.weather
             rain_pct = w.rain_pct
             has_roof = "Yes" if w.has_roof else "No"
-            wind_mph = w.wind_mph if w.wind_mph is not None else ""
-            wind_dir = w.wind_dir or ""
-            wind_relative = w.wind_relative or ""
+            if w.has_roof:
+                wind_mph = wind_dir = wind_relative = "Dome / Roof"
+            else:
+                wind_mph = w.wind_mph if w.wind_mph is not None else ""
+                wind_dir = w.wind_dir or ""
+                wind_relative = w.wind_relative or ""
         except Exception:
             rain_pct = ""
             has_roof = ""
