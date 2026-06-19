@@ -3,7 +3,12 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from games.models import Game
 from weather.models import WeatherData
-from weather.services import STADIUM_COORDS, get_rain_probability
+from weather.services import (
+    STADIUM_COORDS,
+    PARK_CF_BEARING,
+    get_forecast,
+    wind_relative_to_park,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +43,32 @@ class Command(BaseCommand):
                     obj.save(update_fields=["has_roof"])
             else:
                 rain_pct = None
+                wind_mph = None
+                wind_dir = None
+                wind_relative = None
                 if not has_roof and game.start_time_utc:
-                    rain_pct = get_rain_probability(lat, lon, game.start_time_utc)
-                    self.stdout.write(f"  {game} | start_utc={game.start_time_utc} | rain_pct={rain_pct}")
+                    forecast = get_forecast(lat, lon, game.start_time_utc)
+                    if forecast:
+                        rain_pct = forecast["rain_pct"]
+                        wind_mph = forecast["wind_mph"]
+                        wind_dir = forecast["wind_from"]
+                        wind_relative = wind_relative_to_park(
+                            PARK_CF_BEARING.get(game.home_team.mlb_id), wind_dir
+                        )
+                    self.stdout.write(
+                        f"  {game} | start_utc={game.start_time_utc} | "
+                        f"rain_pct={rain_pct} | wind={wind_mph}mph {wind_dir} ({wind_relative})"
+                    )
 
                 WeatherData.objects.update_or_create(
                     game=game,
-                    defaults={"rain_pct": rain_pct, "has_roof": has_roof},
+                    defaults={
+                        "rain_pct": rain_pct,
+                        "has_roof": has_roof,
+                        "wind_mph": wind_mph,
+                        "wind_dir": wind_dir,
+                        "wind_relative": wind_relative,
+                    },
                 )
 
             updated += 1

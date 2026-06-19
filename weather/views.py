@@ -27,6 +27,9 @@ def weather(request):
                 "game": game,
                 "rain_pct": w.rain_pct,
                 "has_roof": w.has_roof,
+                "wind_mph": w.wind_mph,
+                "wind_dir": w.wind_dir,
+                "wind_relative": w.wind_relative,
                 "unknown": False,
             })
         except Exception:
@@ -34,6 +37,9 @@ def weather(request):
                 "game": game,
                 "rain_pct": None,
                 "has_roof": False,
+                "wind_mph": None,
+                "wind_dir": None,
+                "wind_relative": None,
                 "unknown": True,
             })
 

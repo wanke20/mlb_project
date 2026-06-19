@@ -1,4 +1,5 @@
 import logging
+import re
 import requests
 from datetime import datetime
 
@@ -38,10 +39,107 @@ STADIUM_COORDS = {
     158: (43.0280, -87.9712,  True),   # MIL
 }
 
+# mlb_id: compass bearing in degrees from home plate toward center field
+# (0 = N, 90 = E, 180 = S, 270 = W) — i.e. the direction the batter faces.
+# Sourced from ballparks.com / Baseball Almanac orientation diagrams; the four
+# relocated/rebuilt parks (ATL, OAK-Sacramento, MIA, TEX) are noted inline.
+# Roofed parks (see has_roof above) never surface wind, so their values are
+# informational only.
+PARK_CF_BEARING = {
+    108: 45,   # LAA  Angel Stadium
+    109: 0,    # ARI  Chase Field (roof)
+    110: 30,   # BAL  Oriole Park at Camden Yards
+    111: 45,   # BOS  Fenway Park
+    112: 30,   # CHC  Wrigley Field
+    113: 120,  # CIN  Great American Ball Park
+    114: 0,    # CLE  Progressive Field
+    115: 0,    # COL  Coors Field
+    116: 150,  # DET  Comerica Park
+    117: 345,  # HOU  Minute Maid Park (roof)
+    118: 45,   # KC   Kauffman Stadium
+    119: 30,   # LAD  Dodger Stadium
+    120: 30,   # WSH  Nationals Park
+    121: 30,   # NYM  Citi Field
+    133: 30,   # OAK  Sutter Health Park, Sacramento — approx (CF ~NNE toward downtown)
+    134: 120,  # PIT  PNC Park
+    135: 0,    # SD   Petco Park
+    136: 45,   # SEA  T-Mobile Park (roof)
+    137: 90,   # SF   Oracle Park
+    138: 60,   # STL  Busch Stadium
+    139: 45,   # TB   Tropicana Field (roof)
+    140: 60,   # TEX  Globe Life Field (roof) — new park, ENE orientation
+    141: 0,    # TOR  Rogers Centre (roof)
+    142: 90,   # MIN  Target Field
+    143: 15,   # PHI  Citizens Bank Park
+    144: 135,  # ATL  Truist Park — southeast orientation
+    145: 135,  # CWS  Guaranteed Rate Field
+    146: 40,   # MIA  loanDepot park (roof) — new park, approx
+    147: 75,   # NYY  Yankee Stadium
+    158: 135,  # MIL  American Family Field (roof)
+}
+
+# 16-point compass -> degrees (where the wind blows FROM, per NWS convention)
+_CARDINAL_DEGREES = {
+    "N": 0, "NNE": 22.5, "NE": 45, "ENE": 67.5,
+    "E": 90, "ESE": 112.5, "SE": 135, "SSE": 157.5,
+    "S": 180, "SSW": 202.5, "SW": 225, "WSW": 247.5,
+    "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5,
+}
+
+# Relative-wind buckets, clockwise from the center-field axis (each 45° wide,
+# centered on the listed angle). 0° = wind blowing straight out to CF.
+_WIND_BUCKETS = [
+    (0,   "Out to CF"),
+    (45,  "Out to RF"),
+    (90,  "Across L→R"),
+    (135, "In from RF"),
+    (180, "In from CF"),
+    (225, "In from LF"),
+    (270, "Across R→L"),
+    (315, "Out to LF"),
+]
+
 _HEADERS = {"User-Agent": "mlb-predictions-app github.com/wanke20/mlb_project"}
 
 
-def get_rain_probability(lat, lon, game_time_utc):
+def cardinal_to_degrees(card):
+    """16-point compass string ('N', 'NNE', ... 'NW') -> degrees. None if unknown."""
+    if not card:
+        return None
+    return _CARDINAL_DEGREES.get(card.strip().upper())
+
+
+def parse_wind_mph(s):
+    """'10 mph' / '5 to 10 mph' -> int (high end). None if unparseable."""
+    if not s:
+        return None
+    nums = re.findall(r"\d+", str(s))
+    return int(nums[-1]) if nums else None
+
+
+def wind_relative_to_park(cf_bearing, wind_from_cardinal):
+    """Classify wind relative to the park's home-plate->CF axis.
+
+    NWS reports the direction wind comes FROM, so flip 180° to get the
+    direction it blows TOWARD, then measure clockwise from the CF bearing.
+    Returns a label like 'Out to CF' / 'In from CF' / 'Across L->R', or None.
+    """
+    from_deg = cardinal_to_degrees(wind_from_cardinal)
+    if from_deg is None or cf_bearing is None:
+        return None
+    toward_deg = (from_deg + 180) % 360
+    rel = (toward_deg - cf_bearing) % 360
+    # Snap to the nearest 45° bucket (wraps 337.5-360 back to the 0° bucket).
+    idx = int((rel + 22.5) % 360 // 45)
+    return _WIND_BUCKETS[idx][1]
+
+
+def get_forecast(lat, lon, game_time_utc):
+    """Fetch the NWS hourly forecast period covering game time.
+
+    Returns a dict {rain_pct, wind_mph, wind_from} (any value may be None on a
+    missing field), or None if the API lookup fails entirely.
+    """
     # Step 1: resolve NWS grid point
     try:
         resp = requests.get(
@@ -74,7 +172,11 @@ def get_rain_probability(lat, lon, game_time_utc):
         end = datetime.fromisoformat(period["endTime"])
         if start <= game_time_utc <= end:
             prob = period["probabilityOfPrecipitation"]["value"]
-            return prob if prob is not None else 0
+            return {
+                "rain_pct": prob if prob is not None else 0,
+                "wind_mph": parse_wind_mph(period.get("windSpeed")),
+                "wind_from": (period.get("windDirection") or None),
+            }
 
     logger.warning(f"No NWS period found for {game_time_utc} at ({lat}, {lon})")
     return None

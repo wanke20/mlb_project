@@ -63,6 +63,7 @@ def build_games_csv(target_date):
         "away_k_bb_pct", "home_k_bb_pct",
         "away_barrel_pct", "home_barrel_pct",
         "rain_pct", "has_roof",
+        "wind_mph", "wind_dir", "wind_relative",
         "away_score", "home_score",
         "away_starter_er", "home_starter_er",
     ])
@@ -81,9 +82,15 @@ def build_games_csv(target_date):
             w = game.weather
             rain_pct = w.rain_pct
             has_roof = "Yes" if w.has_roof else "No"
+            wind_mph = w.wind_mph if w.wind_mph is not None else ""
+            wind_dir = w.wind_dir or ""
+            wind_relative = w.wind_relative or ""
         except Exception:
             rain_pct = ""
             has_roof = ""
+            wind_mph = ""
+            wind_dir = ""
+            wind_relative = ""
 
         writer.writerow([
             game.date,
@@ -112,6 +119,7 @@ def build_games_csv(target_date):
             ap.k_bb_pct if ap else "", hp.k_bb_pct if hp else "",
             ap.barrel_pct if ap else "", hp.barrel_pct if hp else "",
             rain_pct, has_roof,
+            wind_mph, wind_dir, wind_relative,
             game.away_score if game.away_score is not None else "",
             game.home_score if game.home_score is not None else "",
             game.away_starter_runs if game.away_starter_runs is not None else "",

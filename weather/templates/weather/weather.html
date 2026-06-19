@@ -41,7 +41,7 @@
     {% else %}Game Day Weather
     {% endif %}
 </h1>
-<p class="subtitle">Rain probability at first pitch for {{ target_date|date:"F jS, Y" }} (ET times shown)</p>
+<p class="subtitle">Rain probability and wind (relative to home plate) at first pitch for {{ target_date|date:"F jS, Y" }} (ET times shown)</p>
 <div class="day-switcher">
     <a class="day-btn {% if selected_day == 'yesterday' %}active{% endif %}" href="?date=yesterday">Yesterday</a>
     <a class="day-btn {% if selected_day == 'today' %}active{% endif %}" href="?date=today">Today</a>
@@ -56,6 +56,7 @@
             <th>Matchup</th>
             <th>First Pitch (ET)</th>
             <th>Rain Probability</th>
+            <th>Wind</th>
         </tr>
     </thead>
     <tbody>
@@ -86,6 +87,21 @@
                     <span style="color: #f9e2af; font-weight: 600;">{{ entry.rain_pct }}%</span>
                 {% else %}
                     <span style="color: var(--green); font-weight: 600;">{{ entry.rain_pct }}%</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if entry.has_roof %}
+                    <span class="na">Dome / Roof</span>
+                {% elif entry.unknown or entry.wind_relative is None or entry.wind_mph is None %}
+                    <span class="na">—</span>
+                {% else %}
+                    {% if "Out" in entry.wind_relative %}
+                        <span style="color: var(--green); font-weight: 600;">{{ entry.wind_mph }} mph — {{ entry.wind_relative }}</span>
+                    {% elif "In" in entry.wind_relative %}
+                        <span style="color: var(--red); font-weight: 600;">{{ entry.wind_mph }} mph — {{ entry.wind_relative }}</span>
+                    {% else %}
+                        <span style="font-weight: 600;">{{ entry.wind_mph }} mph — {{ entry.wind_relative }}</span>
+                    {% endif %}
                 {% endif %}
             </td>
         </tr>
