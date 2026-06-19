@@ -49,6 +49,7 @@
 </div>
 
 {% if game_weather %}
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -91,6 +92,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% else %}
     <p>No games scheduled for {{ target_date|date:"F jS" }}.</p>
 {% endif %}

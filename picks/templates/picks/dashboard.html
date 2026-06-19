@@ -78,6 +78,7 @@
 
 {% if pending %}
 <h2>Pending</h2>
+<div class="table-scroll">
 <table>
     <thead>
         <tr><th>Date</th><th>Matchup</th><th>Your pick</th><th>Status</th></tr>
@@ -98,10 +99,12 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endif %}
 
 {% if graded %}
 <h2>Graded</h2>
+<div class="table-scroll">
 <table>
     <thead>
         <tr><th>Date</th><th>Matchup</th><th>Final</th><th>Your pick</th><th>Result</th></tr>
@@ -129,6 +132,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endif %}
 {% endblock %}
 

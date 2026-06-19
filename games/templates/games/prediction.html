@@ -135,6 +135,7 @@
 </div>
 
 <div class="section-heading">Matchup Summary</div>
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -247,8 +248,10 @@
         </tr>
     </tbody>
 </table>
+</div>
 
 <div class="section-heading">Advanced Pitching Metrics</div>
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -285,9 +288,11 @@
         </tr>
     </tbody>
 </table>
+</div>
 
 {% if away_hitters or home_hitters %}
 <div class="section-heading">Top Hitters &amp; Platoon Splits</div>
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -348,10 +353,12 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endif %}
 
 {% if game.home_score is not None %}
 <div class="section-heading">Game Result</div>
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -379,6 +386,7 @@
         </tr>
     </tbody>
 </table>
+</div>
 {% endif %}
 
 <div class="section-heading">Predictions</div>
@@ -457,6 +465,7 @@ makeChart('totalChart', totalChartData, '#3ddc97');
 
 {% if away_relievers or home_relievers %}
 <div class="section-heading">Bullpen Usage</div>
+<div class="table-scroll">
 <table>
     <thead>
         <tr>
@@ -524,6 +533,7 @@ makeChart('totalChart', totalChartData, '#3ddc97');
         {% endfor %}
     </tbody>
 </table>
+</div>
 {% endif %}
 
 {% endblock %}

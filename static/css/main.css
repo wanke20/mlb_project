@@ -120,7 +120,39 @@ body {
 .nav-link:hover { color: var(--text); background: var(--surface); text-decoration: none; }
 .nav-link.active { color: var(--text); background: var(--accent-surface); }
 
+/* The links + user actions live in a flex row that fills the bar on desktop. */
+.nav-menu {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 .nav-spacer { flex: 1; }
+
+/* Hamburger toggle — hidden on desktop, revealed in the mobile media query. */
+.nav-toggle-cb { display: none; }
+.nav-toggle {
+    display: none;
+    margin-left: auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 10px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+.nav-toggle:hover { background: var(--surface); }
+.nav-toggle span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    border-radius: 2px;
+    background: var(--text);
+    transition: transform 0.2s, opacity 0.2s;
+}
 
 .nav-user {
     display: flex;
@@ -624,12 +656,89 @@ tbody tr:hover td { background: var(--surface-hover); }
 }
 .chat-chip:hover { border-color: var(--accent-border); color: var(--text); }
 
+/* ---- Tables: keep wide tables on their own horizontal scroll track ----- */
+/* Templates wrap each <table> in .table-scroll so a 10-column table never
+   forces the whole page to scroll sideways on a phone. */
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 16px;
+    border-radius: var(--radius);
+}
+.table-scroll table { margin-bottom: 0; }
+
 /* ---- Responsive ------------------------------------------------------- */
+@media (max-width: 860px) {
+    /* Collapse the nav into a hamburger-triggered dropdown. */
+    .nav-inner { padding: 0 18px; gap: 0; position: relative; }
+    .nav-toggle { display: flex; }
+
+    .nav-menu {
+        flex: 0;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        padding: 10px 14px 16px;
+        background: var(--header-bg);
+        border-bottom: 1px solid var(--border-soft);
+        box-shadow: var(--shadow);
+        /* Collapsed by default; the checkbox reveals it. */
+        display: none;
+    }
+    .nav-toggle-cb:checked ~ .nav-menu { display: flex; }
+
+    .nav-menu .nav-link { padding: 11px 12px; font-size: 15px; border-radius: 9px; }
+    .nav-spacer { display: none; }
+    .nav-menu .btn-sm { width: 100%; justify-content: center; padding: 11px 14px; font-size: 15px; }
+    .nav-user {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding-top: 8px;
+        margin-top: 4px;
+        border-top: 1px solid var(--border-soft);
+    }
+    .nav-user .who { padding: 4px 2px; }
+    .nav-user form, .nav-user .pill { width: 100%; }
+    .nav-user .pill { justify-content: center; padding: 11px 14px; font-size: 14px; }
+
+    /* Animate the hamburger into an X when open. */
+    .nav-toggle-cb:checked ~ .nav-toggle span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle-cb:checked ~ .nav-toggle span:nth-child(2) { opacity: 0; }
+    .nav-toggle-cb:checked ~ .nav-toggle span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+}
+
 @media (max-width: 720px) {
-    .nav-inner { padding: 0 18px; gap: 2px; }
-    .nav-link { padding: 8px 9px; }
-    .page { padding: 28px 18px 56px; }
-    .hero { padding: 34px 24px; }
-    .hero h1 { font-size: 30px; }
-    .messages { padding: 0 18px; }
+    .page { padding: 26px 16px 56px; }
+    .messages { padding: 0 16px; }
+
+    h1 { font-size: 24px; }
+    .hero { padding: 30px 22px; }
+    .hero h1 { font-size: 28px; }
+    .hero p { font-size: 14.5px; }
+    .page-header { gap: 12px; margin-bottom: 22px; }
+
+    /* One game card per row instead of a 330px-min track that overflows. */
+    .games-grid { grid-template-columns: 1fr; gap: 14px; }
+
+    /* Stack the prediction charts full-width and let canvases scale down. */
+    .charts-row { gap: 14px; }
+    .chart-block { display: block; width: 100%; padding: 18px; }
+    .chart-block canvas { max-width: 100%; height: auto; }
+
+    /* Tighter table cells so more fits before the horizontal scroll kicks in. */
+    th { padding: 11px 12px; }
+    td { padding: 10px 12px; }
+
+    /* 16px inputs prevent iOS Safari from zooming the page on focus. */
+    .field input,
+    .chat-input-row textarea { font-size: 16px; }
+
+    .auth-card { padding: 28px 22px; }
+    .chat-msg { max-width: 92%; }
+    .pick-btn { min-width: 100%; }
 }
