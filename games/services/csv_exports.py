@@ -159,14 +159,15 @@ def build_hitters_csv():
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow([
-        "team", "rank", "hitter", "bats",
+        "team", "date", "rank", "hitter", "bats",
         "season_pa", "season_avg", "season_ops",
         "vs_lhp_pa", "vs_lhp_avg", "vs_lhp_ops",
         "vs_rhp_pa", "vs_rhp_avg", "vs_rhp_ops",
     ])
-    for h in Hitter.objects.select_related("team").order_by("team__name", "rank"):
+    for h in Hitter.objects.select_related("team").order_by("team__name", "date", "rank"):
         writer.writerow([
             h.team.name,
+            h.date.isoformat() if h.date else "",
             h.rank if h.rank is not None else "",
             h.name,
             h.bats or "",

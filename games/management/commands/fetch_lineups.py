@@ -1,14 +1,18 @@
-"""Fill gaps from projected lineups (RotoWire), splits via the MLB Stats API.
+"""Populate projected lineups (RotoWire), splits via the MLB Stats API.
 
-Runs after fetch_games (which sets MLB-announced probable pitchers and the
-top-6-by-OPS hitters) and before fetch_weather. For today + tomorrow:
+Runs after fetch_games (which sets MLB-announced probable pitchers) and before
+fetch_weather. This command is the sole source of Hitter rows — fetch_games no
+longer fetches a top-6 baseline. For today + tomorrow:
 
   * Starters: MLB first. Only games still missing a probable pitcher get the
     RotoWire starter, resolved name -> MLBAM id and stored like any pitcher.
-  * Hitters: when RotoWire has a full lineup for a team, replace that team's
-    top-6 with the actual batting order (rank = lineup spot) and pull each
-    hitter's season line + L/R splits from the MLB Stats API. Teams without a
-    usable lineup keep the top-6 fetch_games produced (graceful fallback).
+  * Hitters: store the actual projected batting order (rank = lineup spot) and
+    pull each hitter's season line + L/R splits from the MLB Stats API. Teams
+    without a usable RotoWire lineup get no hitters (there is no fallback).
+
+Name -> MLBAM id resolution is cache-first (PlayerIDMap), so the team roster is
+only fetched for never-seen names. Hitter splits are fetched once per unique
+player across both dates, so a player in both lineups isn't fetched twice.
 """
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, timedelta
@@ -26,8 +30,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 # A RotoWire lineup must resolve at least this many batters to MLBAM ids before
-# we trust it enough to replace the top-6. Below this we keep the top-6 rather
-# than store a sparse/garbled lineup.
+# we store it. Below this we skip the lineup rather than store a sparse/garbled
+# one (the team simply gets no hitters for that date).
 MIN_RESOLVED_BATTERS = 8
 
 # RotoWire abbreviations vs. MLB Stats API abbreviations differ for a handful of
@@ -73,12 +77,16 @@ class Command(BaseCommand):
             ))
             return
 
+        # Resolve names -> ids per date first (cache-first, roster only on
+        # miss), then fetch each unique hitter's splits ONCE across both dates.
+        resolved_by_date = {}  # date -> {team.id: (team, [resolved entries])}
         for when, target_date in (("today", today), ("tomorrow", tomorrow)):
             lineups = fetch_projected_lineups(when)
             if not lineups:
                 self.stdout.write(self.style.WARNING(
                     f"No RotoWire lineups available for {when} ({target_date}); skipping."
                 ))
+                resolved_by_date[target_date] = {}
                 continue
 
             # Index lineups by MLBAM team id for matching against Game teams.
@@ -91,7 +99,29 @@ class Command(BaseCommand):
                     logger.warning(f"Unmatched RotoWire team abbreviation: {abbr}")
 
             self._fill_starters(target_date, by_id)
-            self._replace_hitters(target_date, by_id)
+            resolved_by_date[target_date] = self._resolve_lineups(target_date, by_id)
+
+        # Fetch splits once per unique hitter across both dates.
+        all_ids = {
+            e["mlb_id"]
+            for teams in resolved_by_date.values()
+            for (_, entries) in teams.values()
+            for e in entries
+        }
+        details_by_id = {}
+        if all_ids:
+            with ThreadPoolExecutor(max_workers=30) as pool:
+                futures = {pool.submit(get_hitter_details, hid): hid for hid in all_ids}
+                for fut in as_completed(futures):
+                    hid = futures[fut]
+                    try:
+                        details_by_id[hid] = fut.result()
+                    except Exception as e:
+                        logger.error(f"Failed to fetch splits for hitter {hid}: {e}")
+                        details_by_id[hid] = {}
+
+        for target_date, teams in resolved_by_date.items():
+            self._write_hitters(target_date, teams, details_by_id)
 
     # ------------------------------------------------------------------
     # Starters: fill only games with no MLB-announced probable pitcher.
@@ -161,9 +191,10 @@ class Command(BaseCommand):
         ))
 
     # ------------------------------------------------------------------
-    # Hitters: replace top-6 with the actual batting order where available.
+    # Hitters: resolve the projected batting order (cache-first), then write.
     # ------------------------------------------------------------------
-    def _replace_hitters(self, target_date, by_id):
+    def _resolve_lineups(self, target_date, by_id):
+        """Return {team.id: (team, [resolved entries])} for this date's lineups."""
         games = Game.objects.filter(date=target_date).select_related("home_team", "away_team")
 
         # One entry per team (handles a team appearing in a doubleheader once).
@@ -176,62 +207,60 @@ class Command(BaseCommand):
                 if lineup and lineup.get("batters"):
                     team_batters[team.id] = (team, lineup["batters"])
 
-        # Resolve names -> MLBAM ids (roster fetched at most once per team).
         resolved_by_team = {}  # team.id -> (team, [entries with mlb_id])
         for team_id, (team, batters) in team_batters.items():
             resolved = [e for e in resolve_players(batters, team) if e["mlb_id"]]
             if len(resolved) < MIN_RESOLVED_BATTERS:
                 logger.warning(
                     f"Only resolved {len(resolved)}/{len(batters)} batters for "
-                    f"{team.abbreviation}; keeping top-6."
+                    f"{team.name}; skipping lineup."
                 )
                 continue
             resolved_by_team[team_id] = (team, resolved)
 
-        if not resolved_by_team:
-            self.stdout.write(self.style.WARNING(
-                f"[{target_date}] No usable RotoWire lineups; kept top-6 hitters."
-            ))
-            return
+        return resolved_by_team
 
-        # Fetch each hitter's season line + L/R splits in parallel.
-        all_ids = {e["mlb_id"] for (_, entries) in resolved_by_team.values() for e in entries}
-        details_by_id = {}
-        with ThreadPoolExecutor(max_workers=15) as pool:
-            futures = {pool.submit(get_hitter_details, hid): hid for hid in all_ids}
-            for fut in as_completed(futures):
-                hid = futures[fut]
-                try:
-                    details_by_id[hid] = fut.result()
-                except Exception as e:
-                    logger.error(f"Failed to fetch splits for hitter {hid}: {e}")
-                    details_by_id[hid] = {}
+    def _write_hitters(self, target_date, resolved_by_team, details_by_id):
+        """Replace this date's hitters with the resolved projected lineups.
+
+        Clears every playing team's hitters for the date first, so teams whose
+        lineup didn't resolve are left with no hitters (no top-6 fallback).
+        """
+        team_ids_today = set()
+        for home_id, away_id in Game.objects.filter(date=target_date).values_list(
+            "home_team_id", "away_team_id"
+        ):
+            team_ids_today.add(home_id)
+            team_ids_today.add(away_id)
+
+        # Build all rows in memory, then write in one bulk insert per date —
+        # individual creates are ~270 separate round-trips to the remote DB.
+        rows = []
+        for team, entries in resolved_by_team.values():
+            for entry in entries:
+                details = details_by_id.get(entry["mlb_id"], {})
+                rows.append(Hitter(
+                    mlb_id=entry["mlb_id"],
+                    date=target_date,
+                    name=entry["name"],
+                    team=team,
+                    rank=entry["order"],  # batting-order spot
+                    bats=entry.get("bats") or details.get("bats"),
+                    season_pa=details.get("season_pa"),
+                    season_avg=details.get("season_avg"),
+                    season_ops=details.get("season_ops"),
+                    vs_l_pa=details.get("vs_l_pa"),
+                    vs_l_avg=details.get("vs_l_avg"),
+                    vs_l_ops=details.get("vs_l_ops"),
+                    vs_r_pa=details.get("vs_r_pa"),
+                    vs_r_avg=details.get("vs_r_avg"),
+                    vs_r_ops=details.get("vs_r_ops"),
+                ))
 
         with transaction.atomic():
-            for team, entries in resolved_by_team.values():
-                Hitter.objects.filter(team=team).delete()
-                for entry in entries:
-                    details = details_by_id.get(entry["mlb_id"], {})
-                    Hitter.objects.update_or_create(
-                        mlb_id=entry["mlb_id"],
-                        defaults={
-                            "name": entry["name"],
-                            "team": team,
-                            "rank": entry["order"],  # batting-order spot
-                            "bats": entry.get("bats") or details.get("bats"),
-                            "season_pa": details.get("season_pa"),
-                            "season_avg": details.get("season_avg"),
-                            "season_ops": details.get("season_ops"),
-                            "vs_l_pa": details.get("vs_l_pa"),
-                            "vs_l_avg": details.get("vs_l_avg"),
-                            "vs_l_ops": details.get("vs_l_ops"),
-                            "vs_r_pa": details.get("vs_r_pa"),
-                            "vs_r_avg": details.get("vs_r_avg"),
-                            "vs_r_ops": details.get("vs_r_ops"),
-                        },
-                    )
+            Hitter.objects.filter(team_id__in=team_ids_today, date=target_date).delete()
+            Hitter.objects.bulk_create(rows)
 
         self.stdout.write(self.style.SUCCESS(
-            f"[{target_date}] Replaced hitters with actual lineups for "
-            f"{len(resolved_by_team)} team(s)."
+            f"[{target_date}] Wrote projected lineups for {len(resolved_by_team)} team(s)."
         ))

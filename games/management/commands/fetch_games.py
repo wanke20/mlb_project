@@ -1,14 +1,11 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
-from games.models import Team, Pitcher, Game, Reliever, Hitter
+from games.models import Team, Pitcher, Game, Reliever
 from games.services.mlb_api import (
     get_schedule, get_pitcher_stats, get_standings, get_teams,
     get_team_season_hitting_stats, get_team_last7_hitting_stats,
     get_team_reliever_stats, get_game_pitchers, get_game_result,
-    get_team_top_hitters, get_hitter_details,
 )
 from games.services.savant_stats import get_savant_leaderboard
 from datetime import datetime, date, timedelta
@@ -330,61 +327,8 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Marked yesterday's reliever appearances."))
 
-        # -----------------------
-        # Step 5.5: Fetch top 4 hitters per team (with L/R splits, in parallel)
-        # -----------------------
-        upcoming_teams = list(Team.objects.filter(mlb_id__in=upcoming_team_ids))
-
-        top_hitters_by_team = {}
-        with ThreadPoolExecutor(max_workers=10) as pool:
-            futures = {pool.submit(get_team_top_hitters, t.mlb_id): t.mlb_id for t in upcoming_teams}
-            for fut in as_completed(futures):
-                team_id = futures[fut]
-                try:
-                    top_hitters_by_team[team_id] = fut.result()
-                except Exception as e:
-                    logger.error(f"Failed to fetch top hitters for team {team_id}: {e}")
-                    top_hitters_by_team[team_id] = []
-
-        hitter_ids = list({h["mlb_id"] for hs in top_hitters_by_team.values() for h in hs})
-        details_by_hitter = {}
-        with ThreadPoolExecutor(max_workers=15) as pool:
-            futures = {pool.submit(get_hitter_details, hid): hid for hid in hitter_ids}
-            for fut in as_completed(futures):
-                hid = futures[fut]
-                try:
-                    details_by_hitter[hid] = fut.result()
-                except Exception as e:
-                    logger.error(f"Failed to fetch splits for hitter {hid}: {e}")
-                    details_by_hitter[hid] = {}
-
-        with transaction.atomic():
-            Hitter.objects.filter(team__mlb_id__in=upcoming_team_ids).delete()
-            for team in upcoming_teams:
-                for rank, h in enumerate(top_hitters_by_team.get(team.mlb_id, []), start=1):
-                    details = details_by_hitter.get(h["mlb_id"], {})
-                    Hitter.objects.update_or_create(
-                        mlb_id=h["mlb_id"],
-                        defaults={
-                            "name": h["name"],
-                            "team": team,
-                            "rank": rank,
-                            "bats": details.get("bats"),
-                            "season_pa": h["pa"],
-                            "season_avg": h["avg"],
-                            "season_ops": h["ops"],
-                            "vs_l_pa": details.get("vs_l_pa"),
-                            "vs_l_avg": details.get("vs_l_avg"),
-                            "vs_l_ops": details.get("vs_l_ops"),
-                            "vs_r_pa": details.get("vs_r_pa"),
-                            "vs_r_avg": details.get("vs_r_avg"),
-                            "vs_r_ops": details.get("vs_r_ops"),
-                        },
-                    )
-
-        self.stdout.write(self.style.SUCCESS(
-            f"Updated top hitters for {len(upcoming_teams)} teams ({len(hitter_ids)} hitters)."
-        ))
+        # Hitters are populated entirely by the fetch_lineups command (the
+        # actual projected batting order), not here — there is no top-6 baseline.
 
         # -----------------------
         # Step 6: Fetch final scores for yesterday's completed games

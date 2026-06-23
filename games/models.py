@@ -75,11 +75,14 @@ class Game(models.Model):
 
 
 class Hitter(models.Model):
-    mlb_id = models.IntegerField(unique=True)
+    mlb_id = models.IntegerField()
     name = models.CharField(max_length=100)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='hitters')
+    # A team's lineup differs by day, so hitters are stored per date. The same
+    # player can appear for the same team on multiple dates (one row each).
+    date = models.DateField(null=True, blank=True)
     bats = models.CharField(max_length=1, null=True, blank=True)  # 'L', 'R', 'S'
-    rank = models.IntegerField(null=True, blank=True)  # 1..N within team, by PA
+    rank = models.IntegerField(null=True, blank=True)  # 1..N within team, by lineup spot
 
     season_pa = models.IntegerField(null=True, blank=True)
     season_avg = models.CharField(max_length=8, null=True, blank=True)
@@ -95,6 +98,7 @@ class Hitter(models.Model):
 
     class Meta:
         ordering = ['rank']
+        unique_together = [('mlb_id', 'date')]
 
     def __str__(self):
         return self.name

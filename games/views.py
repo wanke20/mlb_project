@@ -56,15 +56,12 @@ def game_list(request):
 
 def game_prediction(request, game_id):
     reliever_qs = Reliever.objects.order_by('-season_appearances')
-    hitter_qs = Hitter.objects.order_by('rank')
     game = get_object_or_404(
         Game.objects.select_related(
             "home_team", "away_team", "home_pitcher", "away_pitcher"
         ).prefetch_related(
             Prefetch('home_team__relievers', queryset=reliever_qs),
             Prefetch('away_team__relievers', queryset=reliever_qs),
-            Prefetch('home_team__hitters', queryset=hitter_qs),
-            Prefetch('away_team__hitters', queryset=hitter_qs),
         ),
         game_id=game_id,
     )
@@ -111,8 +108,8 @@ def game_prediction(request, game_id):
         "user_pick": user_pick,
         "away_relievers": list(game.away_team.relievers.all()[:5]),
         "home_relievers": list(game.home_team.relievers.all()[:5]),
-        "away_hitters": list(game.away_team.hitters.all()),
-        "home_hitters": list(game.home_team.hitters.all()),
+        "away_hitters": list(game.away_team.hitters.filter(date=game.date).order_by("rank")),
+        "home_hitters": list(game.home_team.hitters.filter(date=game.date).order_by("rank")),
         "win_chart": chart_json(x_win, y_win),
         "run_chart": chart_json(x_run, y_run),
         "total_chart": chart_json(x_total, y_total),

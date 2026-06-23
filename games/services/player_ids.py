@@ -118,21 +118,41 @@ def resolve_player_id(name, team, bats=None, season=2026, _roster=None):
 
 
 def resolve_players(entries, team, season=2026):
-    """Resolve a lineup for one team, fetching the roster at most once.
+    """Resolve a lineup for one team, hitting the roster only for cache misses.
+
+    Every name is looked up in PlayerIDMap first (one query for the whole
+    team). The team roster is fetched at most once, and only if some name isn't
+    cached yet — so a fully warm cache makes zero roster calls.
 
     `entries` is an iterable of dicts with at least a "name" key and an optional
     "bats" key. Returns a list of {**entry, "mlb_id": int|None} preserving order.
     """
     entries = list(entries)
-    roster = get_team_roster(team.mlb_id, season) if entries else []
-    resolved = []
+    if not entries:
+        return []
+
+    cache = {
+        p.normalized_name: p.mlb_id
+        for p in PlayerIDMap.objects.filter(team=team)
+    }
+
+    results = []
+    misses = []  # (index into results, entry) for names not in the cache
     for entry in entries:
-        mlb_id = resolve_player_id(
-            entry.get("name"),
-            team,
-            bats=entry.get("bats"),
-            season=season,
-            _roster=roster,
-        )
-        resolved.append({**entry, "mlb_id": mlb_id})
-    return resolved
+        mlb_id = cache.get(normalize_name(entry.get("name")))
+        results.append({**entry, "mlb_id": mlb_id})
+        if mlb_id is None:
+            misses.append((len(results) - 1, entry))
+
+    if misses:
+        roster = get_team_roster(team.mlb_id, season)
+        for idx, entry in misses:
+            results[idx]["mlb_id"] = resolve_player_id(
+                entry.get("name"),
+                team,
+                bats=entry.get("bats"),
+                season=season,
+                _roster=roster,
+            )
+
+    return results

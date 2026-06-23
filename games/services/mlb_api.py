@@ -3,6 +3,12 @@ from datetime import date, timedelta
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
+# Shared session so the many per-hitter split calls reuse pooled connections
+# and load the CA bundle once, instead of a fresh TLS handshake per request.
+# urllib3's pool is thread-safe; size it for the fetch_lineups thread pool.
+_session = requests.Session()
+_session.mount("https://", requests.adapters.HTTPAdapter(pool_connections=16, pool_maxsize=32))
+
 def get_schedule(game_date=None):
     if not game_date:
         game_date = date.today().strftime("%Y-%m-%d")
@@ -27,7 +33,7 @@ def get_standings(season=2026):
         "leagueId": "103,104"  # AL and NL
     }
 
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
     return r.json()
 
@@ -40,7 +46,7 @@ def get_teams(season=2026):
     """
     url = f"{BASE_URL}/teams"
     params = {"sportId": 1, "season": season}
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
     data = r.json()
 
@@ -63,7 +69,7 @@ def get_team_season_hitting_stats(season=2026):
         "group": "hitting",
         "sportId": 1,
     }
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
     data = r.json()
 
@@ -94,7 +100,7 @@ def get_team_last7_hitting_stats(season=2026):
         "group": "hitting",
         "sportId": 1,
     }
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
     data = r.json()
 
@@ -128,7 +134,7 @@ def get_team_reliever_stats(team_id, season=2026):
     """Return top relievers for a team sorted by season appearances."""
     url = f"{BASE_URL}/stats"
     params = {"stats": "season", "group": "pitching", "season": season, "teamId": team_id, "sportId": 1, "playerPool": "All", "limit": 40}
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
     data = r.json()
 
@@ -264,7 +270,7 @@ def get_pitcher_stats(pitcher_id):
         "hydrate": f"stats(type=season,season={year},group=pitching)"
     }
 
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
 
     data = r.json()
@@ -312,7 +318,7 @@ def get_team_roster(team_id, season=2026):
             "hydrate": "person(batSide)",
         }
         try:
-            r = requests.get(url, params=params, timeout=10)
+            r = _session.get(url, params=params, timeout=10)
             r.raise_for_status()
             data = r.json()
         except Exception:
@@ -350,7 +356,7 @@ def get_team_top_hitters(team_id, season=2026, limit=6):
         "order": "desc",
         "limit": 20,
     }
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
     data = r.json()
 
@@ -396,7 +402,7 @@ def get_hitter_details(player_id, season=2026):
     params = {
         "hydrate": f"stats(group=hitting,type=[season,statSplits],sitCodes=[vl,vr],season={season})"
     }
-    r = requests.get(url, params=params, timeout=10)
+    r = _session.get(url, params=params, timeout=10)
     r.raise_for_status()
     data = r.json()
 
