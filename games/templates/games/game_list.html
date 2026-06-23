@@ -62,7 +62,7 @@
         {% if game.home_score is not None %}
             <div class="matchup-score">{{ game.away_score }} – {{ game.home_score }}</div>
         {% else %}
-            <div class="matchup-label">{{ game.away_team.abbreviation|default:game.away_team.name }} @ {{ game.home_team.abbreviation|default:game.home_team.name }}</div>
+            <div class="matchup-label">{{ game.away_team.name }} @ {{ game.home_team.name }}</div>
         {% endif %}
         {% with home_abbr=game.home_team|logo_abbr %}
         {% if home_abbr %}

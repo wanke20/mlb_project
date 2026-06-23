@@ -1,13 +1,13 @@
-name: Fetch Weather
+name: Fetch Lineups
 
 on:
   workflow_run:
-    workflows: ["Fetch Lineups"]
+    workflows: ["Fetch Games"]
     types: [completed]
   workflow_dispatch:
 
 jobs:
-  weather:
+  lineups:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,11 +23,11 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Run fetch_weather command
+      - name: Run fetch_lineups command
         env:
             DATABASE_USER: ${{ secrets.DATABASE_USER }}
             DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
             HOST: ${{ secrets.HOST }}
             DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         run: |
-            python manage.py fetch_weather
+            python manage.py fetch_lineups

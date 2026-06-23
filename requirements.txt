@@ -5,3 +5,4 @@ dj-database-url
 whitenoise
 python-dotenv
 requests
+beautifulsoup4

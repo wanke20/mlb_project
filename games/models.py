@@ -116,3 +116,29 @@ class Reliever(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PlayerIDMap(models.Model):
+    """Persistent name -> MLBAM id crosswalk.
+
+    Projected-lineup sources (RotoWire, Baseball Press) give player names, not
+    MLBAM ids. Resolving a name against the team roster is fuzzy and costs an
+    API call, so we cache the result here. This table is NOT wiped by the
+    fetch_games hitter refresh, so it survives across runs and accumulates
+    resolved players (including bench/platoon bats not in the top-6).
+
+    Keyed by (normalized_name, team): a player traded mid-season simply gets a
+    new row under their new team.
+    """
+    normalized_name = models.CharField(max_length=100)  # lowercased, accent-stripped
+    name = models.CharField(max_length=100)  # original display name, for debugging
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='player_ids')
+    mlb_id = models.IntegerField()
+    bats = models.CharField(max_length=1, null=True, blank=True)  # 'L', 'R', 'S'
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [('normalized_name', 'team')]
+
+    def __str__(self):
+        return f"{self.name} ({self.mlb_id})"

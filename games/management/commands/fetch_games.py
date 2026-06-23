@@ -5,7 +5,7 @@ from django.db import transaction
 from django.utils.dateparse import parse_datetime
 from games.models import Team, Pitcher, Game, Reliever, Hitter
 from games.services.mlb_api import (
-    get_schedule, get_pitcher_stats, get_standings,
+    get_schedule, get_pitcher_stats, get_standings, get_teams,
     get_team_season_hitting_stats, get_team_last7_hitting_stats,
     get_team_reliever_stats, get_game_pitchers, get_game_result,
     get_team_top_hitters, get_hitter_details,
@@ -82,6 +82,24 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f"Successfully updated {total_teams} teams for 2026 records.")
         )
+
+        # -----------------------
+        # Step 1.5: Populate team abbreviations
+        # The standings/schedule team blocks omit abbreviation, so pull the
+        # canonical abbreviations from the teams endpoint.
+        # -----------------------
+        try:
+            abbr_updated = 0
+            for t in get_teams(season=2026):
+                if t.get("abbreviation"):
+                    abbr_updated += Team.objects.filter(mlb_id=t["mlb_id"]).update(
+                        abbreviation=t["abbreviation"].lower()
+                    )
+            self.stdout.write(
+                self.style.SUCCESS(f"Updated abbreviations for {abbr_updated} teams.")
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch team abbreviations: {e}")
 
         # -----------------------
         # Step 2: Update season hitting stats

@@ -41,20 +41,22 @@ TEAM_ID_TO_LOGO = {
 @register.filter
 def logo_abbr(team):
     """
-    Returns the logo filename base for a Team, falling back to MLB team_id mapping.
+    Returns the logo filename base for a Team.
+
+    Prefers the curated TEAM_ID_TO_LOGO map because it is kept in sync with the
+    actual filenames in static/logos/. The stored Team.abbreviation carries MLB
+    Stats API values, some of which differ from the logo filenames (e.g. "az"
+    vs ari.png, "wsh" vs was.png), so it is only a fallback for teams not in
+    the map.
     Intended usage: `{{ game.home_team|logo_abbr }}` -> `nyy`
     """
     if team is None:
         return ""
 
-    abbr = getattr(team, "abbreviation", None) or ""
-    abbr = abbr.strip().lower()
-    if abbr:
-        return abbr
-
     team_id = getattr(team, "mlb_id", None)
-    if isinstance(team_id, int):
-        return TEAM_ID_TO_LOGO.get(team_id, "")
+    if isinstance(team_id, int) and team_id in TEAM_ID_TO_LOGO:
+        return TEAM_ID_TO_LOGO[team_id]
 
-    return ""
+    abbr = getattr(team, "abbreviation", None) or ""
+    return abbr.strip().lower()
 

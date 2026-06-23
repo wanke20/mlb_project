@@ -32,6 +32,28 @@ def get_standings(season=2026):
     return r.json()
 
 
+def get_teams(season=2026):
+    """Return [{mlb_id, name, abbreviation}] for all MLB teams.
+
+    Used to map a scraped lineup's team abbreviation to an MLBAM team id, since
+    the stored Team.abbreviation is not reliably populated.
+    """
+    url = f"{BASE_URL}/teams"
+    params = {"sportId": 1, "season": season}
+    r = requests.get(url, params=params, timeout=10)
+    r.raise_for_status()
+    data = r.json()
+
+    return [
+        {
+            "mlb_id": t["id"],
+            "name": t.get("name", ""),
+            "abbreviation": t.get("abbreviation"),
+        }
+        for t in data.get("teams", [])
+    ]
+
+
 def get_team_season_hitting_stats(season=2026):
     """Return season hitting stats for all MLB teams as a dict keyed by team_id."""
     url = f"{BASE_URL}/teams/stats"
@@ -273,6 +295,43 @@ def get_pitcher_stats(pitcher_id):
     return empty
 
 
+def get_team_roster(team_id, season=2026):
+    """Return the team's players as [{mlb_id, name, bats}] for name->id resolution.
+
+    Merges the active and 40-man rosters (deduped by id) so players on the
+    40-man but not the active 26 (recent call-ups, pitchers between starts) are
+    still resolvable. `bats` may be None if the API doesn't hydrate it; callers
+    should treat it as a best-effort tiebreak only.
+    """
+    by_id = {}
+    for roster_type in ("active", "40Man"):
+        url = f"{BASE_URL}/teams/{team_id}/roster"
+        params = {
+            "rosterType": roster_type,
+            "season": season,
+            "hydrate": "person(batSide)",
+        }
+        try:
+            r = requests.get(url, params=params, timeout=10)
+            r.raise_for_status()
+            data = r.json()
+        except Exception:
+            continue
+
+        for entry in data.get("roster", []):
+            person = entry.get("person", {})
+            player_id = person.get("id")
+            if not player_id or player_id in by_id:
+                continue
+            by_id[player_id] = {
+                "mlb_id": player_id,
+                "name": person.get("fullName", ""),
+                "bats": person.get("batSide", {}).get("code"),
+            }
+
+    return list(by_id.values())
+
+
 def get_team_top_hitters(team_id, season=2026, limit=6):
     """Return top hitters for a team by OPS, restricted to the team's PA leaders.
 
@@ -316,19 +375,26 @@ def get_team_top_hitters(team_id, season=2026, limit=6):
 
 EMPTY_HITTER_DETAILS = {
     "bats": None,
+    "season_pa": None, "season_avg": None, "season_ops": None,
     "vs_l_pa": None, "vs_l_avg": None, "vs_l_ops": None,
     "vs_r_pa": None, "vs_r_avg": None, "vs_r_ops": None,
 }
 
 
 def get_hitter_details(player_id, season=2026):
-    """Return handedness plus vs-LHP/RHP splits for a hitter.
+    """Return handedness, season line, and vs-LHP/RHP splits for a hitter.
 
-    One hydrated call to /people/{id} returns both batSide and the two splits.
+    One hydrated call to /people/{id} returns batSide, the season hitting line,
+    and the two platoon splits. The season line lets the lineup fallback (which
+    starts from a name, not the team stats leaderboard) populate the same
+    season_* fields the top-6 path gets from get_team_top_hitters.
     """
     url = f"{BASE_URL}/people/{player_id}"
+    # Both stat types must live in a SINGLE stats(...) hydration — the API
+    # rejects two separate stats(...) hydrations ("provided multiple times
+    # with different sub-hydrations").
     params = {
-        "hydrate": f"stats(group=hitting,type=statSplits,sitCodes=[vl,vr],season={season})"
+        "hydrate": f"stats(group=hitting,type=[season,statSplits],sitCodes=[vl,vr],season={season})"
     }
     r = requests.get(url, params=params, timeout=10)
     r.raise_for_status()
@@ -343,6 +409,7 @@ def get_hitter_details(player_id, season=2026):
     result["bats"] = person.get("batSide", {}).get("code")
 
     for stat_group in person.get("stats", []):
+        group_type = stat_group.get("type", {}).get("displayName")
         for split in stat_group.get("splits", []):
             code = split.get("split", {}).get("code")
             stat = split.get("stat", {})
@@ -354,5 +421,9 @@ def get_hitter_details(player_id, season=2026):
                 result["vs_r_pa"] = safe_int(stat.get("plateAppearances"))
                 result["vs_r_avg"] = stat.get("avg")
                 result["vs_r_ops"] = stat.get("ops")
+            elif group_type == "season":
+                result["season_pa"] = safe_int(stat.get("plateAppearances"))
+                result["season_avg"] = stat.get("avg")
+                result["season_ops"] = stat.get("ops")
 
     return result
