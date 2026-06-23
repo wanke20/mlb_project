@@ -159,7 +159,7 @@ def build_hitters_csv():
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow([
-        "team", "date", "rank", "hitter", "bats",
+        "team", "date", "rank", "hitter", "position", "bats",
         "season_pa", "season_avg", "season_ops",
         "vs_lhp_pa", "vs_lhp_avg", "vs_lhp_ops",
         "vs_rhp_pa", "vs_rhp_avg", "vs_rhp_ops",
@@ -170,6 +170,7 @@ def build_hitters_csv():
             h.date.isoformat() if h.date else "",
             h.rank if h.rank is not None else "",
             h.name,
+            h.position or "",
             h.bats or "",
             h.season_pa if h.season_pa is not None else "",
             h.season_avg or "",

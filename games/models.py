@@ -83,6 +83,7 @@ class Hitter(models.Model):
     date = models.DateField(null=True, blank=True)
     bats = models.CharField(max_length=1, null=True, blank=True)  # 'L', 'R', 'S'
     rank = models.IntegerField(null=True, blank=True)  # 1..N within team, by lineup spot
+    position = models.CharField(max_length=8, null=True, blank=True)  # 'SS', 'DH', '1B', ...
 
     season_pa = models.IntegerField(null=True, blank=True)
     season_avg = models.CharField(max_length=8, null=True, blank=True)

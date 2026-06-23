@@ -245,6 +245,7 @@ class Command(BaseCommand):
                     name=entry["name"],
                     team=team,
                     rank=entry["order"],  # batting-order spot
+                    position=entry.get("pos"),
                     bats=entry.get("bats") or details.get("bats"),
                     season_pa=details.get("season_pa"),
                     season_avg=details.get("season_avg"),

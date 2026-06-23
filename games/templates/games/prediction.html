@@ -298,6 +298,7 @@
         <tr>
             <th>Team</th>
             <th>Hitter</th>
+            <th>Pos</th>
             <th>Bats</th>
             <th>PA</th>
             <th>AVG</th>
@@ -311,6 +312,7 @@
         <tr class="away-row">
             {% if forloop.first %}<td class="team-cell" rowspan="{{ away_hitters|length }}"><span class="team-name">{{ game.away_team.name }}</span> <span class="team-badge badge-away">Away</span></td>{% endif %}
             <td class="player-name">{{ h.name }}</td>
+            <td>{% if h.position %}{{ h.position }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
@@ -333,6 +335,7 @@
         <tr class="home-row">
             {% if forloop.first %}<td class="team-cell" rowspan="{{ home_hitters|length }}"><span class="team-name">{{ game.home_team.name }}</span> <span class="team-badge badge-home">Home</span></td>{% endif %}
             <td class="player-name">{{ h.name }}</td>
+            <td>{% if h.position %}{{ h.position }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
