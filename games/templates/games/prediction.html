@@ -297,6 +297,80 @@
 </table>
 </div>
 
+<div class="section-heading">Pitching Splits <span class="hdr-extra">— Opponent AVG / OPS Against</span></div>
+<div class="table-scroll cmp" style="--rows:8">
+<table>
+    <thead>
+        <tr>
+            <th>Team</th>
+            <th>Pitcher</th>
+            <th>vs LHB<span class="hdr-extra"> (AVG / OPS)</span></th>
+            <th>vs RHB<span class="hdr-extra"> (AVG / OPS)</span></th>
+            <th>Home<span class="hdr-extra"> (AVG / OPS)</span></th>
+            <th>Away<span class="hdr-extra"> (AVG / OPS)</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="away-row">
+            <td>{{ game.away_team.name }} <span class="team-badge badge-away">Away</span></td>
+            <td>{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
+            <td class="split">
+                {% if game.away_pitcher and game.away_pitcher.vs_l_avg or game.away_pitcher.vs_l_ops %}
+                    {{ game.away_pitcher.vs_l_avg|default:"—" }} / {{ game.away_pitcher.vs_l_ops|default:"—" }}
+                    {% if game.away_pitcher.vs_l_bf %}<span class="pa-note"> ({{ game.away_pitcher.vs_l_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td class="split">
+                {% if game.away_pitcher and game.away_pitcher.vs_r_avg or game.away_pitcher.vs_r_ops %}
+                    {{ game.away_pitcher.vs_r_avg|default:"—" }} / {{ game.away_pitcher.vs_r_ops|default:"—" }}
+                    {% if game.away_pitcher.vs_r_bf %}<span class="pa-note"> ({{ game.away_pitcher.vs_r_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td class="split">
+                {% if game.away_pitcher and game.away_pitcher.home_avg or game.away_pitcher.home_ops %}
+                    {{ game.away_pitcher.home_avg|default:"—" }} / {{ game.away_pitcher.home_ops|default:"—" }}
+                    {% if game.away_pitcher.home_bf %}<span class="pa-note"> ({{ game.away_pitcher.home_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td class="split">
+                {% if game.away_pitcher and game.away_pitcher.away_avg or game.away_pitcher.away_ops %}
+                    {{ game.away_pitcher.away_avg|default:"—" }} / {{ game.away_pitcher.away_ops|default:"—" }}
+                    {% if game.away_pitcher.away_bf %}<span class="pa-note"> ({{ game.away_pitcher.away_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+        </tr>
+        <tr class="home-row">
+            <td>{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>
+            <td>{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %}</td>
+            <td class="split">
+                {% if game.home_pitcher and game.home_pitcher.vs_l_avg or game.home_pitcher.vs_l_ops %}
+                    {{ game.home_pitcher.vs_l_avg|default:"—" }} / {{ game.home_pitcher.vs_l_ops|default:"—" }}
+                    {% if game.home_pitcher.vs_l_bf %}<span class="pa-note"> ({{ game.home_pitcher.vs_l_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td class="split">
+                {% if game.home_pitcher and game.home_pitcher.vs_r_avg or game.home_pitcher.vs_r_ops %}
+                    {{ game.home_pitcher.vs_r_avg|default:"—" }} / {{ game.home_pitcher.vs_r_ops|default:"—" }}
+                    {% if game.home_pitcher.vs_r_bf %}<span class="pa-note"> ({{ game.home_pitcher.vs_r_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td class="split">
+                {% if game.home_pitcher and game.home_pitcher.home_avg or game.home_pitcher.home_ops %}
+                    {{ game.home_pitcher.home_avg|default:"—" }} / {{ game.home_pitcher.home_ops|default:"—" }}
+                    {% if game.home_pitcher.home_bf %}<span class="pa-note"> ({{ game.home_pitcher.home_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+            <td class="split">
+                {% if game.home_pitcher and game.home_pitcher.away_avg or game.home_pitcher.away_ops %}
+                    {{ game.home_pitcher.away_avg|default:"—" }} / {{ game.home_pitcher.away_ops|default:"—" }}
+                    {% if game.home_pitcher.away_bf %}<span class="pa-note"> ({{ game.home_pitcher.away_bf }} BF)</span>{% endif %}
+                {% else %}<span class="na">—</span>{% endif %}
+            </td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
 {% if away_hitters or home_hitters %}
 <div class="section-heading">Top Hitters &amp; Platoon Splits</div>
 <div class="table-scroll condensed">

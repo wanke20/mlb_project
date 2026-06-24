@@ -159,6 +159,14 @@ def export_results_csv(request):
         "away_xwoba", "home_xwoba",
         "away_k_bb_pct", "home_k_bb_pct",
         "away_barrel_pct", "home_barrel_pct",
+        "away_vs_lhb_avg", "home_vs_lhb_avg",
+        "away_vs_lhb_ops", "home_vs_lhb_ops",
+        "away_vs_rhb_avg", "home_vs_rhb_avg",
+        "away_vs_rhb_ops", "home_vs_rhb_ops",
+        "away_home_avg", "home_home_avg",
+        "away_home_ops", "home_home_ops",
+        "away_away_avg", "home_away_avg",
+        "away_away_ops", "home_away_ops",
     ])
 
     for game in games:
@@ -187,6 +195,14 @@ def export_results_csv(request):
             ap.xwoba if ap else "", hp.xwoba if hp else "",
             ap.k_bb_pct if ap else "", hp.k_bb_pct if hp else "",
             ap.barrel_pct if ap else "", hp.barrel_pct if hp else "",
+            ap.vs_l_avg or "" if ap else "", hp.vs_l_avg or "" if hp else "",
+            ap.vs_l_ops or "" if ap else "", hp.vs_l_ops or "" if hp else "",
+            ap.vs_r_avg or "" if ap else "", hp.vs_r_avg or "" if hp else "",
+            ap.vs_r_ops or "" if ap else "", hp.vs_r_ops or "" if hp else "",
+            ap.home_avg or "" if ap else "", hp.home_avg or "" if hp else "",
+            ap.home_ops or "" if ap else "", hp.home_ops or "" if hp else "",
+            ap.away_avg or "" if ap else "", hp.away_avg or "" if hp else "",
+            ap.away_ops or "" if ap else "", hp.away_ops or "" if hp else "",
         ])
 
     return response

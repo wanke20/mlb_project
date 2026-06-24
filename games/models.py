@@ -48,6 +48,25 @@ class Pitcher(models.Model):
     xwoba = models.FloatField(null=True, blank=True)
     barrel_pct = models.FloatField(null=True, blank=True)
 
+    # Pitching splits — opponent AVG / OPS against, with batters faced as the
+    # sample size. Pulled from the statSplits hydration (sitCodes vl/vr/h/a).
+    # AVG/OPS are stored as MLB-style strings (e.g. ".220").
+    vs_l_avg = models.CharField(max_length=8, null=True, blank=True)
+    vs_l_ops = models.CharField(max_length=8, null=True, blank=True)
+    vs_l_bf = models.IntegerField(null=True, blank=True)
+
+    vs_r_avg = models.CharField(max_length=8, null=True, blank=True)
+    vs_r_ops = models.CharField(max_length=8, null=True, blank=True)
+    vs_r_bf = models.IntegerField(null=True, blank=True)
+
+    home_avg = models.CharField(max_length=8, null=True, blank=True)
+    home_ops = models.CharField(max_length=8, null=True, blank=True)
+    home_bf = models.IntegerField(null=True, blank=True)
+
+    away_avg = models.CharField(max_length=8, null=True, blank=True)
+    away_ops = models.CharField(max_length=8, null=True, blank=True)
+    away_bf = models.IntegerField(null=True, blank=True)
+
     def __str__(self):
         return self.name
 

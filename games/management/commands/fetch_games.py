@@ -229,6 +229,18 @@ class Command(BaseCommand):
                             "innings_pitched": pitcher_stats["innings_pitched"],
                             "fip": pitcher_stats.get("fip"),
                             "k_bb_pct": pitcher_stats.get("k_bb_pct"),
+                            "vs_l_avg": pitcher_stats.get("vs_l_avg"),
+                            "vs_l_ops": pitcher_stats.get("vs_l_ops"),
+                            "vs_l_bf": pitcher_stats.get("vs_l_bf"),
+                            "vs_r_avg": pitcher_stats.get("vs_r_avg"),
+                            "vs_r_ops": pitcher_stats.get("vs_r_ops"),
+                            "vs_r_bf": pitcher_stats.get("vs_r_bf"),
+                            "home_avg": pitcher_stats.get("home_avg"),
+                            "home_ops": pitcher_stats.get("home_ops"),
+                            "home_bf": pitcher_stats.get("home_bf"),
+                            "away_avg": pitcher_stats.get("away_avg"),
+                            "away_ops": pitcher_stats.get("away_ops"),
+                            "away_bf": pitcher_stats.get("away_bf"),
                         }
 
                         advanced = advanced_pitching.get(pitcher_id)

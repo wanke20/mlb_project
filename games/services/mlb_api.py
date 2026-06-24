@@ -261,6 +261,20 @@ EMPTY_PITCHER_STATS = {
     "innings_pitched": None,
     "fip": None,
     "k_bb_pct": None,
+    # Opponent AVG / OPS against, by handedness and home/away, with batters
+    # faced as the sample size.
+    "vs_l_avg": None, "vs_l_ops": None, "vs_l_bf": None,
+    "vs_r_avg": None, "vs_r_ops": None, "vs_r_bf": None,
+    "home_avg": None, "home_ops": None, "home_bf": None,
+    "away_avg": None, "away_ops": None, "away_bf": None,
+}
+
+# statSplit code -> the field prefix it populates on the pitcher record.
+_PITCHER_SPLIT_CODES = {
+    "vl": "vs_l",
+    "vr": "vs_r",
+    "h": "home",
+    "a": "away",
 }
 
 
@@ -268,8 +282,12 @@ def get_pitcher_stats(pitcher_id):
     year = 2026
 
     url = f"{BASE_URL}/people/{pitcher_id}"
+    # Both stat types live in a SINGLE stats(...) hydration — the API rejects
+    # two separate stats(...) hydrations. statSplits with sitCodes gives the
+    # vs-LHB/RHB and home/away opponent lines in the same call as the season
+    # line (see get_hitter_details for the analogous hitting query).
     params = {
-        "hydrate": f"stats(type=season,season={year},group=pitching)"
+        "hydrate": f"stats(group=pitching,type=[season,statSplits],sitCodes=[vl,vr,h,a],season={year})"
     }
 
     r = _session.get(url, params=params, timeout=10)
@@ -282,25 +300,29 @@ def get_pitcher_stats(pitcher_id):
         return dict(EMPTY_PITCHER_STATS)
 
     person = people[0]
-    throws = person.get("pitchHand", {}).get("code")
-    stats = person.get("stats", [])
+    result = dict(EMPTY_PITCHER_STATS)
+    result["throws"] = person.get("pitchHand", {}).get("code")
 
-    if stats and stats[0].get("splits"):
-        stat = stats[0]["splits"][0].get("stat", {})
-        return {
-            "throws": throws,
-            "era": safe_float(stat.get("era")),
-            "whip": safe_float(stat.get("whip")),
-            "strikeouts": safe_int(stat.get("strikeOuts")),
-            "walks": safe_int(stat.get("baseOnBalls")),
-            "innings_pitched": stat.get("inningsPitched"),
-            "fip": _compute_fip(stat),
-            "k_bb_pct": _compute_k_bb_pct(stat),
-        }
+    for stat_group in person.get("stats", []):
+        group_type = stat_group.get("type", {}).get("displayName")
+        for split in stat_group.get("splits", []):
+            code = split.get("split", {}).get("code")
+            stat = split.get("stat", {})
+            prefix = _PITCHER_SPLIT_CODES.get(code)
+            if group_type == "statSplits" and prefix:
+                result[f"{prefix}_avg"] = stat.get("avg")
+                result[f"{prefix}_ops"] = stat.get("ops")
+                result[f"{prefix}_bf"] = safe_int(stat.get("battersFaced"))
+            elif group_type == "season":
+                result["era"] = safe_float(stat.get("era"))
+                result["whip"] = safe_float(stat.get("whip"))
+                result["strikeouts"] = safe_int(stat.get("strikeOuts"))
+                result["walks"] = safe_int(stat.get("baseOnBalls"))
+                result["innings_pitched"] = stat.get("inningsPitched")
+                result["fip"] = _compute_fip(stat)
+                result["k_bb_pct"] = _compute_k_bb_pct(stat)
 
-    empty = dict(EMPTY_PITCHER_STATS)
-    empty["throws"] = throws
-    return empty
+    return result
 
 
 def get_team_roster(team_id, season=2026):
