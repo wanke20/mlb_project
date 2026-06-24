@@ -32,16 +32,19 @@ def trends(request):
     return render(request, "games/trends.html", {"teams": teams})
 
 
-def game_list(request):
+def _resolve_target_date(request):
+    """Map the ?date=today|yesterday|tomorrow param to (day_param, date)."""
     today = date.today()
     day_param = request.GET.get("date", "today")
     if day_param == "yesterday":
-        target_date = today - timedelta(days=1)
-    elif day_param == "tomorrow":
-        target_date = today + timedelta(days=1)
-    else:
-        day_param = "today"
-        target_date = today
+        return "yesterday", today - timedelta(days=1)
+    if day_param == "tomorrow":
+        return "tomorrow", today + timedelta(days=1)
+    return "today", today
+
+
+def game_list(request):
+    day_param, target_date = _resolve_target_date(request)
 
     games = Game.objects.select_related(
         "home_team", "away_team", "home_pitcher", "away_pitcher"
@@ -195,6 +198,7 @@ def export_bullpen_csv(request):
 
 
 def export_hitters_csv(request):
-    response = HttpResponse(build_hitters_csv(), content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="mlb_hitters_{date.today()}.csv"'
+    _, target_date = _resolve_target_date(request)
+    response = HttpResponse(build_hitters_csv(target_date), content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="mlb_hitters_{target_date}.csv"'
     return response

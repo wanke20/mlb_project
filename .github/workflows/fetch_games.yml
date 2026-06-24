@@ -3,7 +3,7 @@ name: Fetch Games
 on:
   schedule:
     - cron: '0 2  * * *'   # 2 AM UTC  (10 PM EDT)
-    - cron: '0 15 * * *'   # 3 PM UTC  (11 AM EDT)
+    - cron: '0 14 * * *'   # 2 PM UTC  (10 AM EDT)
   workflow_dispatch:      # Allows manual run
 
 jobs:

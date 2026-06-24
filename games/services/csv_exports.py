@@ -154,8 +154,11 @@ def build_bullpen_csv():
     return out.getvalue()
 
 
-def build_hitters_csv():
-    """All hitters with season + platoon splits, grouped by team and lineup rank."""
+def build_hitters_csv(target_date=None):
+    """Hitters with season + platoon splits, grouped by team and lineup rank.
+
+    Pass target_date to export only that date's lineups; otherwise all dates.
+    """
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow([
@@ -164,7 +167,10 @@ def build_hitters_csv():
         "vs_lhp_pa", "vs_lhp_avg", "vs_lhp_ops",
         "vs_rhp_pa", "vs_rhp_avg", "vs_rhp_ops",
     ])
-    for h in Hitter.objects.select_related("team").order_by("team__name", "date", "rank"):
+    hitters = Hitter.objects.select_related("team")
+    if target_date is not None:
+        hitters = hitters.filter(date=target_date)
+    for h in hitters.order_by("team__name", "date", "rank"):
         writer.writerow([
             h.team.name,
             h.date.isoformat() if h.date else "",
