@@ -53,6 +53,24 @@ def make_pick(request, game_id):
 
 
 @login_required
+@require_POST
+def delete_pick(request, game_id):
+    game = get_object_or_404(Game, game_id=game_id)
+    deleted, _ = Pick.objects.filter(user=request.user, game=game).delete()
+    if deleted:
+        messages.success(request, "Pick removed.")
+    else:
+        messages.info(request, "You had no pick on that game.")
+
+    nxt = request.POST.get("next")
+    if nxt and url_has_allowed_host_and_scheme(
+        nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(nxt)
+    return redirect("dashboard")
+
+
+@login_required
 def dashboard(request):
     picks = list(
         request.user.picks.select_related(

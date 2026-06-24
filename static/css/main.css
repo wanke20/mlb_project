@@ -233,6 +233,15 @@ code {
 .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
 .btn-ghost:hover { background: var(--surface-hover); border-color: var(--accent-border); color: var(--text); }
 
+.btn-danger { background: transparent; color: var(--red); border-color: var(--border); }
+.btn-danger:hover { background: var(--red-surface); border-color: var(--red); color: var(--red); }
+
+/* ---- Manage-picks (edit mode) ---------------------------------------- */
+.header-actions { display: flex; align-items: center; gap: 10px; }
+/* Per-row Remove forms stay hidden until "Manage picks" is toggled on. */
+.pick-remove { margin: 0; display: none; }
+body.picks-editing .pick-remove { display: inline-flex; }
+
 .btn-block { width: 100%; }
 .btn-sm { padding: 8px 13px; font-size: 13px; border-radius: 8px; }
 

@@ -127,7 +127,14 @@
             </div>
         </form>
         {% if user_pick %}
-            <div class="pick-result"><span class="badge pending">Current pick</span> {{ user_pick.picked_team.name }} — tap the other team to change it.</div>
+            <div class="pick-result">
+                <span class="badge pending">Current pick</span> {{ user_pick.picked_team.name }} — tap the other team to change it.
+                <form method="post" action="{% url 'delete_pick' game.game_id %}" onsubmit="return confirm('Remove your pick on this game?');" style="display:inline; margin:0 0 0 8px;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Remove pick</button>
+                </form>
+            </div>
         {% endif %}
     {% else %}
         <p style="margin:8px 0 0;"><a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}">Log in</a> or <a href="{% url 'signup' %}">sign up</a> to pick a winner and track your record.</p>

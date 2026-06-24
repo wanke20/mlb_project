@@ -13,7 +13,10 @@
         <h1>My Picks</h1>
         <p class="subtitle">Your daily pick'em, graded against final scores.</p>
     </div>
-    <a class="btn btn-primary" href="{% url 'game_list' %}">Make picks →</a>
+    <div class="header-actions">
+        {% if total %}<button type="button" class="btn btn-ghost" id="manageToggle" data-label-on="Done" data-label-off="Manage picks">Manage picks</button>{% endif %}
+        <a class="btn btn-primary" href="{% url 'game_list' %}">Make picks →</a>
+    </div>
 </div>
 
 <div class="stat-grid">
@@ -81,7 +84,7 @@
 <div class="table-scroll">
 <table>
     <thead>
-        <tr><th>Date</th><th>Matchup</th><th>Your pick</th><th>Status</th></tr>
+        <tr><th>Date</th><th>Matchup</th><th>Your pick</th><th>Status</th><th></th></tr>
     </thead>
     <tbody>
         {% for pick in pending %}
@@ -95,6 +98,12 @@
                 </span>
             </td>
             <td><span class="badge pending">Pending</span></td>
+            <td style="text-align:right;">
+                <form method="post" action="{% url 'delete_pick' pick.game.game_id %}" onsubmit="return confirm('Remove your pick on this game?');" class="pick-remove">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm" title="Remove pick">Remove</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
@@ -107,7 +116,7 @@
 <div class="table-scroll">
 <table>
     <thead>
-        <tr><th>Date</th><th>Matchup</th><th>Final</th><th>Your pick</th><th>Result</th></tr>
+        <tr><th>Date</th><th>Matchup</th><th>Final</th><th>Your pick</th><th>Result</th><th></th></tr>
     </thead>
     <tbody>
         {% for pick in graded %}
@@ -128,6 +137,12 @@
                     <span class="badge loss">Lost</span>
                 {% endif %}
             </td>
+            <td style="text-align:right;">
+                <form method="post" action="{% url 'delete_pick' pick.game.game_id %}" onsubmit="return confirm('Remove your pick on this game?');" class="pick-remove">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-sm" title="Remove pick">Remove</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
@@ -137,6 +152,19 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+// Manage-picks toggle: reveals the per-row Remove buttons so picks can be
+// deleted one at a time. Picks aren't removed until each Remove is clicked.
+(function () {
+    const toggle = document.getElementById("manageToggle");
+    if (!toggle) return;
+    toggle.addEventListener("click", function () {
+        const editing = document.body.classList.toggle("picks-editing");
+        toggle.textContent = editing ? toggle.dataset.labelOn : toggle.dataset.labelOff;
+        toggle.classList.toggle("active", editing);
+    });
+})();
+</script>
 {% if assistant_enabled %}
 <script>
 (function () {
