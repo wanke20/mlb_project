@@ -9,6 +9,7 @@ from weather.services import (
     get_forecast,
     wind_relative_to_park,
 )
+from games.services.dates import eastern_today
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,8 @@ class Command(BaseCommand):
     help = "Fetch rain probability for today's and upcoming games and store in DB"
 
     def handle(self, *args, **kwargs):
-        now = timezone.now()
-        today = now.date()
+        now = timezone.now()  # UTC-aware; compared against start_time_utc below
+        today = eastern_today()  # day floor follows the Eastern baseball calendar
         games = Game.objects.select_related("home_team").filter(date__gte=today)
         updated = 0
 

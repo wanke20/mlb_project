@@ -84,7 +84,10 @@ def build_system_instruction(day: str) -> str:
 
     framework = _framework_text()
     games_csv = build_games_csv(target_date)
-    hitters_csv = build_hitters_csv()
+    # Filter hitters to the selected day's lineups — without target_date this
+    # returns every date's lineups at once, so the LLM would see tomorrow's (and
+    # stale) hitters while reasoning about today's slate.
+    hitters_csv = build_hitters_csv(target_date)
     bullpen_csv = build_bullpen_csv()
 
     sections = [_PERSONA]
@@ -96,7 +99,10 @@ def build_system_instruction(day: str) -> str:
         f"===== GAMES — {day.upper()} ({target_date}) [CSV] =====\n"
         + (games_csv.strip() or "(no games scheduled)")
     )
-    sections.append("===== HITTERS (season + platoon splits) [CSV] =====\n" + hitters_csv.strip())
+    sections.append(
+        f"===== HITTERS — {day.upper()} ({target_date}) (season + platoon splits) [CSV] =====\n"
+        + (hitters_csv.strip() or "(no lineups posted yet)")
+    )
     sections.append("===== BULLPENS (usage + fatigue) [CSV] =====\n" + bullpen_csv.strip())
     sections.append(
         f"The user is asking about {day}'s slate ({target_date}). "

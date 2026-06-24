@@ -3,7 +3,7 @@ import json
 import math
 from statistics import NormalDist
 
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
@@ -16,6 +16,7 @@ from games.services.csv_exports import (
     build_hitters_csv,
     resolve_date,
 )
+from games.services.dates import eastern_today
 
 
 def _linspace(start, stop, n):
@@ -34,7 +35,7 @@ def trends(request):
 
 def _resolve_target_date(request):
     """Map the ?date=today|yesterday|tomorrow param to (day_param, date)."""
-    today = date.today()
+    today = eastern_today()
     day_param = request.GET.get("date", "today")
     if day_param == "yesterday":
         return "yesterday", today - timedelta(days=1)
@@ -129,7 +130,7 @@ def export_csv(request):
 
 
 def export_results_csv(request):
-    today = date.today()
+    today = eastern_today()
     day_param = request.GET.get("date", "today")
     if day_param == "yesterday":
         target_date = today - timedelta(days=1)
@@ -193,7 +194,7 @@ def export_results_csv(request):
 
 def export_bullpen_csv(request):
     response = HttpResponse(build_bullpen_csv(), content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="mlb_bullpen_{date.today()}.csv"'
+    response["Content-Disposition"] = f'attachment; filename="mlb_bullpen_{eastern_today()}.csv"'
     return response
 
 

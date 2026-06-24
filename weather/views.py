@@ -1,11 +1,12 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.shortcuts import render
 from games.models import Game
+from games.services.dates import eastern_today
 
 
 def weather(request):
-    today = date.today()
+    today = eastern_today()
     day_param = request.GET.get("date", "today")
     if day_param == "yesterday":
         target_date = today - timedelta(days=1)

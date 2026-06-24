@@ -15,7 +15,7 @@ only fetched for never-seen names. Hitter splits are fetched once per unique
 player across both dates, so a player in both lineups isn't fetched twice.
 """
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -25,6 +25,7 @@ from games.services.lineups import fetch_projected_lineups
 from games.services.player_ids import resolve_player_id, resolve_players
 from games.services.mlb_api import get_pitcher_stats, get_hitter_details, get_teams
 from games.services.savant_stats import get_savant_leaderboard
+from games.services.dates import eastern_today
 
 import logging
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ class Command(BaseCommand):
     help = "Fill missing starters and replace top-6 hitters with actual lineups (RotoWire)."
 
     def handle(self, *args, **kwargs):
-        today = date.today()
+        today = eastern_today()
         tomorrow = today + timedelta(days=1)
 
         # Map RotoWire abbreviation -> MLBAM team id. The stored
@@ -77,14 +78,28 @@ class Command(BaseCommand):
             ))
             return
 
+        # RotoWire's "today"/"tomorrow" are relative to its own (US/Eastern)
+        # clock, which drifts from our UTC server date overnight — asking for
+        # "today" after midnight UTC can return the prior day's lineups. So we
+        # fetch both pages but trust the real calendar date embedded in each
+        # lineup, bucket by it, and only attach a lineup to a game date when the
+        # dates actually match.
+        lineups_by_date = {}  # "YYYY-MM-DD" -> {abbr: data}
+        for when in ("today", "tomorrow"):
+            for abbr, data in fetch_projected_lineups(when).items():
+                day = data.get("date")
+                if not day:
+                    continue
+                lineups_by_date.setdefault(day, {})[abbr] = data
+
         # Resolve names -> ids per date first (cache-first, roster only on
         # miss), then fetch each unique hitter's splits ONCE across both dates.
         resolved_by_date = {}  # date -> {team.id: (team, [resolved entries])}
-        for when, target_date in (("today", today), ("tomorrow", tomorrow)):
-            lineups = fetch_projected_lineups(when)
+        for target_date in (today, tomorrow):
+            lineups = lineups_by_date.get(target_date.isoformat(), {})
             if not lineups:
                 self.stdout.write(self.style.WARNING(
-                    f"No RotoWire lineups available for {when} ({target_date}); skipping."
+                    f"No RotoWire lineups matching {target_date}; skipping."
                 ))
                 resolved_by_date[target_date] = {}
                 continue

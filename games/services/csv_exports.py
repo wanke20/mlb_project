@@ -8,18 +8,19 @@ means the download and the AI context can never drift apart.
 
 import csv
 import io
-from datetime import date, timedelta
+from datetime import timedelta
 
 from django.db.models import F
 from django.utils import timezone
 
 from games.models import Game, Hitter, Reliever
+from games.services.dates import eastern_today
 from games.templatetags.team_logos import logo_abbr
 
 
 def resolve_date(day_param):
     """Map a ``today|yesterday|tomorrow`` query param to a concrete date."""
-    today = date.today()
+    today = eastern_today()
     if day_param == "yesterday":
         return today - timedelta(days=1)
     if day_param == "tomorrow":

@@ -2,7 +2,7 @@ name: Fetch Weather
 
 on:
   workflow_run:
-    workflows: ["Fetch Lineups"]
+    workflows: ["Fetch Games"]
     types: [completed]
   workflow_dispatch:
 

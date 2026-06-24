@@ -11,6 +11,7 @@ Returns {} on any failure so callers degrade gracefully to the existing
 top-6 hitters / null starter behavior.
 """
 import logging
+import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -18,6 +19,13 @@ from bs4 import BeautifulSoup
 logger = logging.getLogger(__name__)
 
 ROTOWIRE_URL = "https://www.rotowire.com/baseball/daily-lineups.php"
+
+# Each lineup box embeds its game's real calendar date in the links it carries
+# (e.g. /baseball/box-score/...-2026-06-24-2941549). RotoWire's "today"/
+# "tomorrow" params are relative to its own (US/Eastern) clock, which drifts
+# from our UTC server date overnight, so we read this date and match on it
+# rather than trusting the relative day we asked for.
+_GAME_DATE_RE = re.compile(r"(\d{4}-\d{2}-\d{2})-\d{5,}")
 
 # A browser-like UA is enough for RotoWire's lineup page; without it some
 # responses are truncated.
@@ -40,6 +48,7 @@ def fetch_projected_lineups(when="today", timeout=15):
 
         {
             "HOU": {
+                "date": "2026-06-24" | None,   # the lineup's real game date
                 "starter": "Peter Lambert" | None,
                 "starter_hand": "R" | "L" | None,
                 "status": "confirmed" | "expected" | None,
@@ -68,6 +77,16 @@ def fetch_projected_lineups(when="today", timeout=15):
         return {}
 
 
+def _box_date(box):
+    """The lineup box's real game date ("YYYY-MM-DD"), read from an embedded
+    game link, or None if no dated link is present."""
+    for a in box.select("a[href]"):
+        m = _GAME_DATE_RE.search(a.get("href", ""))
+        if m:
+            return m.group(1)
+    return None
+
+
 def _parse_rotowire(html):
     soup = BeautifulSoup(html, "html.parser")
     result = {}
@@ -77,12 +96,14 @@ def _parse_rotowire(html):
         if len(abbrs) < 2:
             continue
         visit_abbr, home_abbr = abbrs[0], abbrs[1]
+        box_date = _box_date(box)
 
         for abbr, selector in ((visit_abbr, "ul.lineup__list.is-visit"),
                                (home_abbr, "ul.lineup__list.is-home")):
             ul = box.select_one(selector)
             parsed = _parse_list(ul)
             if abbr and parsed:
+                parsed["date"] = box_date
                 result[abbr.upper()] = parsed
 
     return result

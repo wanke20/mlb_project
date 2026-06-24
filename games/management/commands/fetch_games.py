@@ -8,7 +8,9 @@ from games.services.mlb_api import (
     get_team_reliever_stats, get_game_pitchers, get_game_result,
 )
 from games.services.savant_stats import get_savant_leaderboard
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
+
+from games.services.dates import eastern_today
 
 import logging
 logger = logging.getLogger(__name__)
@@ -147,7 +149,7 @@ class Command(BaseCommand):
         # -----------------------
         # Step 4: Update games and probable pitchers (today + tomorrow)
         # -----------------------
-        today = date.today()
+        today = eastern_today()
         tomorrow = today + timedelta(days=1)
         fetch_dates = [today, tomorrow]
         total_games = 0

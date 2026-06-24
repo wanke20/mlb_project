@@ -1,5 +1,7 @@
 import requests
-from datetime import date, timedelta
+from datetime import timedelta
+
+from games.services.dates import eastern_today
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 
@@ -11,7 +13,7 @@ _session.mount("https://", requests.adapters.HTTPAdapter(pool_connections=16, po
 
 def get_schedule(game_date=None):
     if not game_date:
-        game_date = date.today().strftime("%Y-%m-%d")
+        game_date = eastern_today().strftime("%Y-%m-%d")
 
     url = f"{BASE_URL}/schedule"
     params = {
@@ -89,7 +91,7 @@ def get_team_season_hitting_stats(season=2026):
 
 def get_team_last7_hitting_stats(season=2026):
     """Return hitting stats for the last 7 days for all MLB teams, keyed by team_id."""
-    end_date = date.today()
+    end_date = eastern_today()
     start_date = end_date - timedelta(days=6)
     url = f"{BASE_URL}/teams/stats"
     params = {
