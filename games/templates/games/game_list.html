@@ -38,7 +38,9 @@
 {% for game in games %}
 <a class="game-card" href="{% url 'game_prediction' game.game_id %}">
 
-    {% if game.home_score is not None %}
+    {% if game.postponed %}
+        <div class="game-status postponed"><span class="dot"></span> Postponed</div>
+    {% elif game.home_score is not None %}
         <div class="game-status final"><span class="dot"></span> Final</div>
     {% else %}
         <div class="game-status">

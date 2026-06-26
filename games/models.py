@@ -82,6 +82,8 @@ class Game(models.Model):
     home_pitcher = models.ForeignKey(Pitcher, related_name="home_starts", null=True, blank=True, on_delete=models.SET_NULL)
     away_pitcher = models.ForeignKey(Pitcher, related_name="away_starts", null=True, blank=True, on_delete=models.SET_NULL)
 
+    postponed = models.BooleanField(default=False)
+
     home_score = models.IntegerField(null=True, blank=True)
     away_score = models.IntegerField(null=True, blank=True)
     home_starter_runs = models.IntegerField(null=True, blank=True)

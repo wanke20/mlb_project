@@ -478,8 +478,10 @@ tbody tr:hover td { background: var(--surface-hover); }
     text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600;
 }
 .game-status.final { color: var(--text-muted); }
+.game-status.postponed { color: var(--orange); }
 .game-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .game-status.final .dot { background: var(--text-faint); }
+.game-status.postponed .dot { background: var(--orange); }
 
 .matchup-header {
     display: flex; align-items: center; justify-content: space-between;

@@ -181,7 +181,9 @@ class Command(BaseCommand):
                 for game in d.get("games", []):
                     game_id = game["gamePk"]
                     fetched_game_ids.add(game_id)
-                    if game.get("status", {}).get("abstractGameState") == "Final":
+                    status = game.get("status", {})
+                    is_postponed = status.get("detailedState") == "Postponed"
+                    if status.get("abstractGameState") == "Final" and not is_postponed:
                         final_game_ids.add(game_id)
                     game_start_utc = parse_datetime(game.get("gameDate")) if game.get("gameDate") else None
 
@@ -276,7 +278,8 @@ class Command(BaseCommand):
                             "home_team": home_team,
                             "away_team": away_team,
                             "home_pitcher": home_pitcher,
-                            "away_pitcher": away_pitcher
+                            "away_pitcher": away_pitcher,
+                            "postponed": is_postponed,
                         }
                     )
 
