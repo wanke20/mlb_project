@@ -321,7 +321,8 @@ class Command(BaseCommand):
                 logger.error(f"Failed to fetch relievers for team {team.mlb_id}: {e}")
                 continue
 
-            for r in team_relievers[:10]:
+            top_relievers = team_relievers[:10]
+            for r in top_relievers:
                 Reliever.objects.update_or_create(
                     mlb_id=r["mlb_id"],
                     defaults={
@@ -333,6 +334,15 @@ class Command(BaseCommand):
                         "era": r["era"],
                     }
                 )
+
+            # Prune relievers no longer in this team's top set (traded away,
+            # demoted, or converted to starting). Without this, update_or_create
+            # only ever adds rows, so stale pitchers linger on the team and can
+            # surface in today's bullpen. Only runs when the fetch succeeded
+            # (the except above `continue`s), so a failed API call can't wipe a
+            # team's bullpen.
+            fetched_ids = {r["mlb_id"] for r in top_relievers}
+            Reliever.objects.filter(team=team).exclude(mlb_id__in=fetched_ids).delete()
 
         self.stdout.write(self.style.SUCCESS("Updated reliever rosters."))
 

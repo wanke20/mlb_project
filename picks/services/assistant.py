@@ -88,7 +88,7 @@ def build_system_instruction(day: str) -> str:
     # returns every date's lineups at once, so the LLM would see tomorrow's (and
     # stale) hitters while reasoning about today's slate.
     hitters_csv = build_hitters_csv(target_date)
-    bullpen_csv = build_bullpen_csv()
+    bullpen_csv = build_bullpen_csv(day)
 
     sections = [_PERSONA]
     if framework:

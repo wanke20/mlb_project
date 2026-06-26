@@ -209,8 +209,12 @@ def export_results_csv(request):
 
 
 def export_bullpen_csv(request):
-    response = HttpResponse(build_bullpen_csv(), content_type="text/csv")
-    response["Content-Disposition"] = f'attachment; filename="mlb_bullpen_{eastern_today()}.csv"'
+    day_param = request.GET.get("date", "today")
+    if day_param not in ("today", "tomorrow"):
+        day_param = "today"
+    target_date = resolve_date(day_param)
+    response = HttpResponse(build_bullpen_csv(day_param), content_type="text/csv")
+    response["Content-Disposition"] = f'attachment; filename="mlb_bullpen_{target_date}.csv"'
     return response
 
 

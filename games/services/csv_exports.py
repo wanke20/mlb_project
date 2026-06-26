@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from games.models import Game, Hitter, Reliever
 from games.services.dates import eastern_today
+from games.services.mlb_api import get_game_pitchers
 from games.templatetags.team_logos import logo_abbr
 
 
@@ -157,15 +158,100 @@ def build_games_csv(target_date):
     return out.getvalue()
 
 
-def build_bullpen_csv():
-    """All relievers, grouped by team, ordered by appearances."""
+def _bullpen_usage_for_tomorrow(team_ids):
+    """Resolve each reliever's "pitched yesterday" status for the tomorrow slate.
+
+    For a game tomorrow, "yesterday" is *today* — so the relevant question is
+    who pitched in each team's game today. That game may not be finished yet, so
+    per team:
+
+      - game today is final        -> real appearances from today's boxscore
+      - game today not final yet   -> "Incomplete" (we can't know who'll be used)
+      - off today / postponed      -> "No" (nobody pitched the day before)
+
+    Returns a ``resolve(reliever) -> (pitched_yesterday, yesterday_pitches)``
+    callable. Today's boxscores are fetched lazily, once per game.
+    """
+    today = eastern_today()
+    team_today_game = {}
+    for g in Game.objects.filter(date=today):
+        team_today_game[g.home_team_id] = g
+        team_today_game[g.away_team_id] = g
+
+    status_by_team = {}        # team_id -> "completed" | "incomplete" | "rested"
+    pitches_by_mlb_id = {}     # mlb_id -> pitches thrown today
+    fetched = {}               # game_id -> appearances (shared game fetched once)
+    for team_id in team_ids:
+        game = team_today_game.get(team_id)
+        if game is None or game.postponed:
+            status_by_team[team_id] = "rested"
+        elif game.home_score is not None:
+            status_by_team[team_id] = "completed"
+            if game.game_id not in fetched:
+                try:
+                    fetched[game.game_id] = get_game_pitchers(game.game_id)
+                except Exception:
+                    fetched[game.game_id] = {}
+            pitches_by_mlb_id.update(fetched[game.game_id])
+        else:
+            status_by_team[team_id] = "incomplete"
+
+    def resolve(reliever):
+        status = status_by_team.get(reliever.team_id, "rested")
+        if status == "incomplete":
+            return "Incomplete", "Incomplete"
+        if status == "completed":
+            pitches = pitches_by_mlb_id.get(reliever.mlb_id)
+            if pitches is not None:
+                return "Yes", pitches
+        return "No", ""
+
+    return resolve
+
+
+def build_bullpen_csv(day_param="today"):
+    """Relievers for the teams playing on ``day_param`` (today or tomorrow),
+    grouped by team and ordered by appearances.
+
+    The ``pitched_yesterday`` columns are relative to the slate's own date: for
+    a given game, "yesterday" is the day before it. For the *today* slate that
+    is the stored ``pitched_yesterday`` flag (the previous day's appearances,
+    set by fetch_games). For the *tomorrow* slate the relevant day is today —
+    whose games may still be in progress — so the status is derived live; see
+    ``_bullpen_usage_for_tomorrow``.
+    """
+    target_date = resolve_date(day_param)
+
+    team_ids = set()
+    for home_id, away_id in Game.objects.filter(date=target_date).values_list(
+        "home_team_id", "away_team_id"
+    ):
+        team_ids.add(home_id)
+        team_ids.add(away_id)
+
+    tomorrow_usage = (
+        _bullpen_usage_for_tomorrow(team_ids) if day_param == "tomorrow" else None
+    )
+
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow([
         "team", "reliever", "appearances", "era", "saves", "holds",
         "pitched_yesterday", "yesterday_pitches",
     ])
-    for r in Reliever.objects.select_related("team").order_by("team__name", "-season_appearances"):
+    relievers = (
+        Reliever.objects.select_related("team")
+        .filter(team_id__in=team_ids)
+        .order_by("team__name", "-season_appearances")
+    )
+    for r in relievers:
+        if tomorrow_usage is not None:
+            pitched_yesterday, yesterday_pitches = tomorrow_usage(r)
+        else:
+            pitched_yesterday = "Yes" if r.pitched_yesterday else "No"
+            yesterday_pitches = (
+                r.yesterday_pitches if r.yesterday_pitches is not None else ""
+            )
         writer.writerow([
             r.team.name,
             r.name,
@@ -173,8 +259,8 @@ def build_bullpen_csv():
             r.era if r.era is not None else "",
             r.saves,
             r.holds,
-            "Yes" if r.pitched_yesterday else "No",
-            r.yesterday_pitches if r.yesterday_pitches is not None else "",
+            pitched_yesterday,
+            yesterday_pitches,
         ])
     return out.getvalue()
 

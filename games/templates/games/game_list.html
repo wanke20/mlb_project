@@ -28,7 +28,7 @@
             <a class="pill" href="{% url 'export_results_csv' %}?date=yesterday">↓ Results CSV</a>
         {% else %}
             <a class="pill" href="{% url 'export_csv' %}?date={{ selected_day }}">↓ Games CSV</a>
-            <a class="pill" href="{% url 'export_bullpen_csv' %}">↓ Bullpen CSV</a>
+            <a class="pill" href="{% url 'export_bullpen_csv' %}?date={{ selected_day }}">↓ Bullpen CSV</a>
             <a class="pill" href="{% url 'export_hitters_csv' %}?date={{ selected_day }}">↓ Hitters CSV</a>
         {% endif %}
     </div>
