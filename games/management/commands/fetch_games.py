@@ -162,6 +162,12 @@ class Command(BaseCommand):
         # below keeps existing games (and their related rows) intact.
         fetched_game_ids = set()
 
+        # Game ids the schedule reports as completed ("Final"). Used below so we
+        # only pull final scores for games that have actually finished — a live
+        # or not-yet-started game would otherwise get a partial/zero score
+        # written and be rendered as "Final" in the UI.
+        final_game_ids = set()
+
         for fetch_date in fetch_dates:
             try:
                 data = get_schedule(game_date=fetch_date.strftime("%Y-%m-%d"))
@@ -175,6 +181,8 @@ class Command(BaseCommand):
                 for game in d.get("games", []):
                     game_id = game["gamePk"]
                     fetched_game_ids.add(game_id)
+                    if game.get("status", {}).get("abstractGameState") == "Final":
+                        final_game_ids.add(game_id)
                     game_start_utc = parse_datetime(game.get("gameDate")) if game.get("gameDate") else None
 
                     # -----------------------
@@ -345,10 +353,25 @@ class Command(BaseCommand):
         # actual projected batting order), not here — there is no top-6 baseline.
 
         # -----------------------
-        # Step 6: Fetch final scores for yesterday's completed games
+        # Step 6: Fetch final scores for completed games.
+        # Yesterday's games are always finished by the time this runs. Today's
+        # games are included only when the schedule reported them as "Final",
+        # so a game still in progress isn't written with a partial score and
+        # shown as "Final" in the UI. This lets today's results appear the same
+        # day they complete rather than waiting for the next day's run.
+        #
+        # Games that already have a stored score are skipped: a final score is
+        # immutable, so re-fetching it just wastes an HTTP call per game.
         # -----------------------
+        result_games = list(
+            Game.objects.filter(date=yesterday, home_score__isnull=True)
+        ) + list(
+            Game.objects.filter(
+                date=today, game_id__in=final_game_ids, home_score__isnull=True
+            )
+        )
         results_updated = 0
-        for game in Game.objects.filter(date=yesterday):
+        for game in result_games:
             try:
                 result = get_game_result(game.game_id)
                 Game.objects.filter(pk=game.pk).update(**result)
