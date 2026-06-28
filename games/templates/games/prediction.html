@@ -391,7 +391,7 @@
     <tbody>
         {% for h in away_hitters %}
         <tr class="away-row">
-            {% if forloop.first %}<td class="team-cell" rowspan="{{ away_hitters|length }}"><span class="team-name">{{ game.away_team.name }}</span> <span class="team-badge badge-away">Away</span></td>{% endif %}
+            {% if forloop.first %}<td class="team-cell" rowspan="{{ away_hitters|length|add:1 }}"><span class="team-name">{{ game.away_team.name }}</span> <span class="team-badge badge-away">Away</span></td>{% endif %}
             <td class="player-name">{{ h.name }}</td>
             <td>{% if h.position %}{{ h.position }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
@@ -412,9 +412,21 @@
             </td>
         </tr>
         {% endfor %}
+        {% if away_hitters %}
+        <tr class="away-row avg-row">
+            <td class="player-name">Lineup Avg</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{ away_lineup_avg.season_avg|default:"—" }}</td>
+            <td>{{ away_lineup_avg.season_ops|default:"—" }}</td>
+            <td class="split">{% if away_lineup_avg.vs_l_avg or away_lineup_avg.vs_l_ops %}{{ away_lineup_avg.vs_l_avg|default:"—" }} / {{ away_lineup_avg.vs_l_ops|default:"—" }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td class="split">{% if away_lineup_avg.vs_r_avg or away_lineup_avg.vs_r_ops %}{{ away_lineup_avg.vs_r_avg|default:"—" }} / {{ away_lineup_avg.vs_r_ops|default:"—" }}{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+        {% endif %}
         {% for h in home_hitters %}
         <tr class="home-row">
-            {% if forloop.first %}<td class="team-cell" rowspan="{{ home_hitters|length }}"><span class="team-name">{{ game.home_team.name }}</span> <span class="team-badge badge-home">Home</span></td>{% endif %}
+            {% if forloop.first %}<td class="team-cell" rowspan="{{ home_hitters|length|add:1 }}"><span class="team-name">{{ game.home_team.name }}</span> <span class="team-badge badge-home">Home</span></td>{% endif %}
             <td class="player-name">{{ h.name }}</td>
             <td>{% if h.position %}{{ h.position }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
@@ -435,6 +447,18 @@
             </td>
         </tr>
         {% endfor %}
+        {% if home_hitters %}
+        <tr class="home-row avg-row">
+            <td class="player-name">Lineup Avg</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>{{ home_lineup_avg.season_avg|default:"—" }}</td>
+            <td>{{ home_lineup_avg.season_ops|default:"—" }}</td>
+            <td class="split">{% if home_lineup_avg.vs_l_avg or home_lineup_avg.vs_l_ops %}{{ home_lineup_avg.vs_l_avg|default:"—" }} / {{ home_lineup_avg.vs_l_ops|default:"—" }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td class="split">{% if home_lineup_avg.vs_r_avg or home_lineup_avg.vs_r_ops %}{{ home_lineup_avg.vs_r_avg|default:"—" }} / {{ home_lineup_avg.vs_r_ops|default:"—" }}{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+        {% endif %}
     </tbody>
 </table>
 </div>

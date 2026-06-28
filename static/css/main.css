@@ -318,6 +318,11 @@ td { padding: 12px 16px; border-bottom: 1px solid var(--border-soft); color: var
 tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: var(--surface-hover); }
 
+/* Lineup-average summary row: set it apart from the per-hitter rows above. */
+tr.avg-row td { border-top: 2px solid var(--border); background: var(--bg-soft); font-weight: 600; }
+tr.avg-row:hover td { background: var(--bg-soft); }
+tr.avg-row .player-name { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+
 /* ---- Status text helpers --------------------------------------------- */
 .streak-win  { color: var(--green); font-weight: 700; }
 .streak-loss { color: var(--red);   font-weight: 700; }

@@ -24,6 +24,37 @@ def _linspace(start, stop, n):
     return [start + i * step for i in range(n)]
 
 
+def _avg_rate(values):
+    """Mean of rate-stat strings (AVG/OPS), formatted like '.275' / '1.025'.
+
+    The values are stored as strings and may be missing or blank; only the
+    parseable ones are averaged. Returns None when none can be parsed.
+    """
+    nums = []
+    for v in values:
+        try:
+            nums.append(float(v))
+        except (TypeError, ValueError):
+            continue
+    if not nums:
+        return None
+    formatted = f"{sum(nums) / len(nums):.3f}"
+    # MLB convention drops the leading zero on sub-1.000 rate stats (.275).
+    return formatted[1:] if formatted.startswith("0.") else formatted
+
+
+def _lineup_averages(hitters):
+    """Unweighted mean of a lineup's season and platoon rate stats."""
+    return {
+        "season_avg": _avg_rate(h.season_avg for h in hitters),
+        "season_ops": _avg_rate(h.season_ops for h in hitters),
+        "vs_l_avg": _avg_rate(h.vs_l_avg for h in hitters),
+        "vs_l_ops": _avg_rate(h.vs_l_ops for h in hitters),
+        "vs_r_avg": _avg_rate(h.vs_r_avg for h in hitters),
+        "vs_r_ops": _avg_rate(h.vs_r_ops for h in hitters),
+    }
+
+
 def home_page(request):
     return render(request, "games/home.html")
 
@@ -106,14 +137,19 @@ def game_prediction(request, game_id):
     if request.user.is_authenticated:
         user_pick = game.picks.filter(user=request.user).first()
 
+    away_hitters = list(game.away_team.hitters.filter(date=game.date).order_by("rank"))
+    home_hitters = list(game.home_team.hitters.filter(date=game.date).order_by("rank"))
+
     context = {
         "game": game,
         "prediction": prediction,
         "user_pick": user_pick,
         "away_relievers": list(game.away_team.relievers.all()[:5]),
         "home_relievers": list(game.home_team.relievers.all()[:5]),
-        "away_hitters": list(game.away_team.hitters.filter(date=game.date).order_by("rank")),
-        "home_hitters": list(game.home_team.hitters.filter(date=game.date).order_by("rank")),
+        "away_hitters": away_hitters,
+        "home_hitters": home_hitters,
+        "away_lineup_avg": _lineup_averages(away_hitters),
+        "home_lineup_avg": _lineup_averages(home_hitters),
         "win_chart": chart_json(x_win, y_win),
         "run_chart": chart_json(x_run, y_run),
         "total_chart": chart_json(x_total, y_total),
