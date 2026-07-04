@@ -58,6 +58,33 @@
     {% block content %}{% endblock %}
 </div>
 
+<footer class="footer">
+    <div class="footer-inner">
+        <div class="footer-brand">
+            <a class="brand" href="{% url 'home_page' %}">
+                <span class="logo-dot"></span> MLB Predictions
+            </a>
+            <p class="footer-tag">Daily win-probability, run-differential, and run-total
+                estimates for every MLB matchup.</p>
+        </div>
+        <nav class="footer-links" aria-label="Footer">
+            <a href="{% url 'game_list' %}">Games</a>
+            <a href="{% url 'trends' %}">Trends</a>
+            <a href="{% url 'weather' %}">Weather</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}">My Picks</a>
+            {% else %}
+                <a href="{% url 'login' %}">Log in</a>
+            {% endif %}
+        </nav>
+    </div>
+    <div class="footer-bottom">
+        <span>&copy; {% now "Y" %} MLB Predictions</span>
+        <span class="footer-note">Data from the MLB Stats API &amp; Baseball Savant.
+            Not affiliated with or endorsed by MLB. For informational use only.</span>
+    </div>
+</footer>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>
