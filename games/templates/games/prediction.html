@@ -395,8 +395,9 @@
                 <th>Hitter <span class="hdr-extra">(hover for splits)</span></th>
                 <th>Pos</th>
                 <th>Bats</th>
-                <th>AVG</th>
                 <th>OPS</th>
+                <th>LHP</th>
+                <th>RHP</th>
             </tr>
         </thead>
         <tbody>
@@ -406,14 +407,17 @@
                 <td class="player-name has-pop">{{ h.name }}
                     <div class="hitter-pop">
                         <div class="hp-row"><span class="hp-k">PA</span><span>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}—{% endif %}</span></div>
+                        <div class="hp-row"><span class="hp-k">AVG</span><span>{% if h.season_avg %}{{ h.season_avg }}{% else %}—{% endif %}</span></div>
+                        <div class="hp-row"><span class="hp-k">OPS</span><span>{% if h.season_ops %}{{ h.season_ops }}{% else %}—{% endif %}</span></div>
                         <div class="hp-row"><span class="hp-k">vs LHP</span><span>{% if h.vs_l_avg or h.vs_l_ops %}{{ h.vs_l_avg|default:"—" }} / {{ h.vs_l_ops|default:"—" }}{% if h.vs_l_pa %} ({{ h.vs_l_pa }} PA){% endif %}{% else %}—{% endif %}</span></div>
                         <div class="hp-row"><span class="hp-k">vs RHP</span><span>{% if h.vs_r_avg or h.vs_r_ops %}{{ h.vs_r_avg|default:"—" }} / {{ h.vs_r_ops|default:"—" }}{% if h.vs_r_pa %} ({{ h.vs_r_pa }} PA){% endif %}{% else %}—{% endif %}</span></div>
                     </div>
                 </td>
                 <td>{% if h.position %}{{ h.position }}{% else %}<span class="na">—</span>{% endif %}</td>
                 <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
-                <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
                 <td>{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+                <td>{% if h.vs_l_ops %}{{ h.vs_l_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+                <td>{% if h.vs_r_ops %}{{ h.vs_r_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
             </tr>
             {% endfor %}
             {% if away_hitters %}
@@ -421,8 +425,9 @@
                 <td class="player-name">Lineup Avg</td>
                 <td></td>
                 <td></td>
-                <td>{{ away_lineup_avg.season_avg|default:"—" }}</td>
                 <td>{{ away_lineup_avg.season_ops|default:"—" }}</td>
+                <td>{{ away_lineup_avg.vs_l_ops|default:"—" }}</td>
+                <td>{{ away_lineup_avg.vs_r_ops|default:"—" }}</td>
             </tr>
             {% endif %}
             {% for h in home_hitters %}
@@ -431,14 +436,17 @@
                 <td class="player-name has-pop">{{ h.name }}
                     <div class="hitter-pop">
                         <div class="hp-row"><span class="hp-k">PA</span><span>{% if h.season_pa is not None %}{{ h.season_pa }}{% else %}—{% endif %}</span></div>
+                        <div class="hp-row"><span class="hp-k">AVG</span><span>{% if h.season_avg %}{{ h.season_avg }}{% else %}—{% endif %}</span></div>
+                        <div class="hp-row"><span class="hp-k">OPS</span><span>{% if h.season_ops %}{{ h.season_ops }}{% else %}—{% endif %}</span></div>
                         <div class="hp-row"><span class="hp-k">vs LHP</span><span>{% if h.vs_l_avg or h.vs_l_ops %}{{ h.vs_l_avg|default:"—" }} / {{ h.vs_l_ops|default:"—" }}{% if h.vs_l_pa %} ({{ h.vs_l_pa }} PA){% endif %}{% else %}—{% endif %}</span></div>
                         <div class="hp-row"><span class="hp-k">vs RHP</span><span>{% if h.vs_r_avg or h.vs_r_ops %}{{ h.vs_r_avg|default:"—" }} / {{ h.vs_r_ops|default:"—" }}{% if h.vs_r_pa %} ({{ h.vs_r_pa }} PA){% endif %}{% else %}—{% endif %}</span></div>
                     </div>
                 </td>
                 <td>{% if h.position %}{{ h.position }}{% else %}<span class="na">—</span>{% endif %}</td>
                 <td>{% if h.bats %}<span class="hand-badge">{{ h.bats }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
-                <td>{% if h.season_avg %}{{ h.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
                 <td>{% if h.season_ops %}{{ h.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+                <td>{% if h.vs_l_ops %}{{ h.vs_l_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+                <td>{% if h.vs_r_ops %}{{ h.vs_r_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
             </tr>
             {% endfor %}
             {% if home_hitters %}
@@ -446,8 +454,9 @@
                 <td class="player-name">Lineup Avg</td>
                 <td></td>
                 <td></td>
-                <td>{{ home_lineup_avg.season_avg|default:"—" }}</td>
                 <td>{{ home_lineup_avg.season_ops|default:"—" }}</td>
+                <td>{{ home_lineup_avg.vs_l_ops|default:"—" }}</td>
+                <td>{{ home_lineup_avg.vs_r_ops|default:"—" }}</td>
             </tr>
             {% endif %}
         </tbody>

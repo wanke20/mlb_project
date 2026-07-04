@@ -688,6 +688,16 @@ tr.avg-row .player-name { color: var(--text-muted); text-transform: uppercase; l
     .hitters-charts .chart-canvas-wrap { flex: none; height: 200px; }
 }
 .hitters-compact { width: 100%; }
+/* Keep the rowspan team column narrow: shrink to content, stack the name over
+   the badge, and let a long team name wrap rather than widen the whole table. */
+.hitters-compact .team-cell { width: 1%; padding-right: 10px; vertical-align: middle; }
+.hitters-compact .team-cell .team-name {
+    display: block;
+    white-space: normal;
+    line-height: 1.2;
+    max-width: 72px;
+}
+.hitters-compact .team-cell .team-badge { margin-left: 0; margin-top: 4px; }
 .hitters-compact td.player-name.has-pop { position: relative; cursor: help; }
 .hitters-compact td.player-name.has-pop::after {
     content: "";
