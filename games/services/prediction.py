@@ -32,8 +32,8 @@ SIGMA_TOTAL    = 3.0    # Std dev for total run distribution
 WT_SEASON_RPG = 0.40
 WT_SEASON_OPS = 0.30
 WT_SEASON_AVG = 0.15
-WT_LAST7_RPG  = 0.10
-WT_LAST7_AVG  = 0.05
+WT_LAST14_RPG = 0.10
+WT_LAST14_AVG = 0.05
 
 
 def parse_record(record_str):
@@ -98,7 +98,7 @@ def estimate_team_rpg(team):
     """Estimate a team's expected runs per game using a weighted blend of
     season and recent hitting metrics, each normalised to league average.
 
-    Season stats (RPG, OPS, AVG) carry 85% of the weight; last-7-day
+    Season stats (RPG, OPS, AVG) carry 85% of the weight; last-14-day
     stats carry the remaining 15%, so recent hot/cold streaks nudge the
     estimate without dominating it.  Missing stats fall back to league
     average so the model degrades gracefully early in the season.
@@ -108,16 +108,16 @@ def estimate_team_rpg(team):
     season_rpg = (team.season_runs / games) if team.season_runs else LEAGUE_AVG_RPG
     ops        = float(team.season_ops)  if team.season_ops  else LEAGUE_AVG_OPS
     avg        = float(team.season_avg)  if team.season_avg  else LEAGUE_AVG_AVG
-    last7_rpg  = (team.last7_runs / 7)   if team.last7_runs  else LEAGUE_AVG_RPG
-    last7_avg  = float(team.last7_avg)   if team.last7_avg   else LEAGUE_AVG_AVG
+    last14_rpg = (team.last14_runs / 14) if team.last14_runs else LEAGUE_AVG_RPG
+    last14_avg = float(team.last14_avg)  if team.last14_avg  else LEAGUE_AVG_AVG
 
     # Express each metric as a ratio to league average, then blend
     rpg = LEAGUE_AVG_RPG * (
         WT_SEASON_RPG * (season_rpg / LEAGUE_AVG_RPG)
-        + WT_SEASON_OPS * (ops       / LEAGUE_AVG_OPS)
-        + WT_SEASON_AVG * (avg       / LEAGUE_AVG_AVG)
-        + WT_LAST7_RPG  * (last7_rpg / LEAGUE_AVG_RPG)
-        + WT_LAST7_AVG  * (last7_avg / LEAGUE_AVG_AVG)
+        + WT_SEASON_OPS * (ops        / LEAGUE_AVG_OPS)
+        + WT_SEASON_AVG * (avg        / LEAGUE_AVG_AVG)
+        + WT_LAST14_RPG * (last14_rpg / LEAGUE_AVG_RPG)
+        + WT_LAST14_AVG * (last14_avg / LEAGUE_AVG_AVG)
     )
     return rpg
 

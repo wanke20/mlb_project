@@ -17,7 +17,13 @@ class Team(models.Model):
 
     # Last 7 days hitting
     last7_avg = models.CharField(max_length=8, null=True, blank=True)
+    last7_ops = models.CharField(max_length=8, null=True, blank=True)
     last7_runs = models.IntegerField(null=True, blank=True)
+
+    # Last 14 days hitting
+    last14_avg = models.CharField(max_length=8, null=True, blank=True)
+    last14_ops = models.CharField(max_length=8, null=True, blank=True)
+    last14_runs = models.IntegerField(null=True, blank=True)
 
     # Season hitting
     season_avg = models.CharField(max_length=8, null=True, blank=True)

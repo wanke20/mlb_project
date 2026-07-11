@@ -89,10 +89,11 @@ def get_team_season_hitting_stats(season=2026):
     return result
 
 
-def get_team_last7_hitting_stats(season=2026):
-    """Return hitting stats for the last 7 days for all MLB teams, keyed by team_id."""
+def _get_team_hitting_last_days(days, season=2026):
+    """Return hitting stats over the trailing ``days`` window for all MLB teams,
+    keyed by team_id. ``days`` counts back inclusively from today."""
     end_date = eastern_today()
-    start_date = end_date - timedelta(days=6)
+    start_date = end_date - timedelta(days=days - 1)
     url = f"{BASE_URL}/teams/stats"
     params = {
         "stats": "byDateRange",
@@ -113,9 +114,20 @@ def get_team_last7_hitting_stats(season=2026):
         if team_id:
             result[team_id] = {
                 "avg": stat.get("avg"),
+                "ops": stat.get("ops"),
                 "runs": safe_int(stat.get("runs")),
             }
     return result
+
+
+def get_team_last7_hitting_stats(season=2026):
+    """Return hitting stats for the last 7 days for all MLB teams, keyed by team_id."""
+    return _get_team_hitting_last_days(7, season=season)
+
+
+def get_team_last14_hitting_stats(season=2026):
+    """Return hitting stats for the last 14 days for all MLB teams, keyed by team_id."""
+    return _get_team_hitting_last_days(14, season=season)
 
 
 def safe_float(value):

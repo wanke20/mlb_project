@@ -4,7 +4,7 @@ from django.utils.dateparse import parse_datetime
 from games.models import Team, Pitcher, Game, Reliever
 from games.services.mlb_api import (
     get_schedule, get_pitcher_stats, get_standings, get_teams,
-    get_team_season_hitting_stats, get_team_last7_hitting_stats,
+    get_team_season_hitting_stats, get_team_last7_hitting_stats, get_team_last14_hitting_stats,
     get_team_reliever_stats, get_game_pitchers, get_game_result,
 )
 from games.services.savant_stats import get_savant_leaderboard
@@ -119,20 +119,38 @@ class Command(BaseCommand):
             logger.error(f"Failed to fetch season hitting stats: {e}")
 
         # -----------------------
-        # Step 3: Update last 7 days runs
+        # Step 3: Update last 7 days hitting
         # -----------------------
         try:
             last7_stats = get_team_last7_hitting_stats(season=2026)
             for team_id, stats in last7_stats.items():
                 Team.objects.filter(mlb_id=team_id).update(
                     last7_avg=stats["avg"],
+                    last7_ops=stats["ops"],
                     last7_runs=stats["runs"],
                 )
             self.stdout.write(
-                self.style.SUCCESS(f"Updated last-7-day runs for {len(last7_stats)} teams.")
+                self.style.SUCCESS(f"Updated last-7-day hitting for {len(last7_stats)} teams.")
             )
         except Exception as e:
             logger.error(f"Failed to fetch last-7-day hitting stats: {e}")
+
+        # -----------------------
+        # Step 3b: Update last 14 days hitting
+        # -----------------------
+        try:
+            last14_stats = get_team_last14_hitting_stats(season=2026)
+            for team_id, stats in last14_stats.items():
+                Team.objects.filter(mlb_id=team_id).update(
+                    last14_avg=stats["avg"],
+                    last14_ops=stats["ops"],
+                    last14_runs=stats["runs"],
+                )
+            self.stdout.write(
+                self.style.SUCCESS(f"Updated last-14-day hitting for {len(last14_stats)} teams.")
+            )
+        except Exception as e:
+            logger.error(f"Failed to fetch last-14-day hitting stats: {e}")
 
         # -----------------------
         # Step 3.5: Fetch Baseball Savant Statcast leaderboard (one bulk pull)

@@ -159,8 +159,9 @@
             <th>OPS</th>
             <th>R</th>
             <th>SO</th>
-            <th>L7 AVG</th>
-            <th>L7 R</th>
+            <th>L14 AVG</th>
+            <th>L14 OPS</th>
+            <th>L14 R</th>
         </tr>
     </thead>
     <tbody>
@@ -174,8 +175,9 @@
             <td>{% if game.away_team.season_ops %}{{ game.away_team.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.away_team.season_runs is not None %}{{ game.away_team.season_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.away_team.season_strikeouts is not None %}{{ game.away_team.season_strikeouts }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if game.away_team.last7_avg %}{{ game.away_team.last7_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if game.away_team.last7_runs is not None %}{{ game.away_team.last7_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_team.last14_avg %}{{ game.away_team.last14_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_team.last14_ops %}{{ game.away_team.last14_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_team.last14_runs is not None %}{{ game.away_team.last14_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
         </tr>
         <tr class="home-row">
             <td>{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>
@@ -187,8 +189,9 @@
             <td>{% if game.home_team.season_ops %}{{ game.home_team.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.home_team.season_runs is not None %}{{ game.home_team.season_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.home_team.season_strikeouts is not None %}{{ game.home_team.season_strikeouts }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if game.home_team.last7_avg %}{{ game.home_team.last7_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if game.home_team.last7_runs is not None %}{{ game.home_team.last7_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_team.last14_avg %}{{ game.home_team.last14_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_team.last14_ops %}{{ game.home_team.last14_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_team.last14_runs is not None %}{{ game.home_team.last14_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
         </tr>
     </tbody>
 </table>
