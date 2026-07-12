@@ -19,11 +19,13 @@ class Team(models.Model):
     last7_avg = models.CharField(max_length=8, null=True, blank=True)
     last7_ops = models.CharField(max_length=8, null=True, blank=True)
     last7_runs = models.IntegerField(null=True, blank=True)
+    last7_games = models.IntegerField(null=True, blank=True)
 
     # Last 14 days hitting
     last14_avg = models.CharField(max_length=8, null=True, blank=True)
     last14_ops = models.CharField(max_length=8, null=True, blank=True)
     last14_runs = models.IntegerField(null=True, blank=True)
+    last14_games = models.IntegerField(null=True, blank=True)
 
     # Season hitting
     season_avg = models.CharField(max_length=8, null=True, blank=True)
@@ -33,6 +35,25 @@ class Team(models.Model):
 
     def __str__(self):
         return self.name
+
+    @staticmethod
+    def _rpg(runs, games):
+        """Runs per game, rounded to 1 decimal. None when data is missing."""
+        if runs is None or not games:
+            return None
+        return round(runs / games, 1)
+
+    @property
+    def season_rpg(self):
+        return self._rpg(self.season_runs, (self.wins or 0) + (self.losses or 0))
+
+    @property
+    def last7_rpg(self):
+        return self._rpg(self.last7_runs, self.last7_games)
+
+    @property
+    def last14_rpg(self):
+        return self._rpg(self.last14_runs, self.last14_games)
 
 
 class Pitcher(models.Model):

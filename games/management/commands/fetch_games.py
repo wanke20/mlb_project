@@ -128,6 +128,7 @@ class Command(BaseCommand):
                     last7_avg=stats["avg"],
                     last7_ops=stats["ops"],
                     last7_runs=stats["runs"],
+                    last7_games=stats["games"],
                 )
             self.stdout.write(
                 self.style.SUCCESS(f"Updated last-7-day hitting for {len(last7_stats)} teams.")
@@ -145,6 +146,7 @@ class Command(BaseCommand):
                     last14_avg=stats["avg"],
                     last14_ops=stats["ops"],
                     last14_runs=stats["runs"],
+                    last14_games=stats["games"],
                 )
             self.stdout.write(
                 self.style.SUCCESS(f"Updated last-14-day hitting for {len(last14_stats)} teams.")

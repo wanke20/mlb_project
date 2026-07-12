@@ -6,22 +6,19 @@
 {% load tz %}
 {% load team_logos %}
 <style>
-    /* Section headers with left accent bar */
-    h2.section-heading {
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--text-muted);
-        border-left: 3px solid var(--accent);
-        padding-left: 10px;
-        margin: 32px 0 14px;
-    }
+    #trends-tabs { margin-bottom: 22px; }
+    .trends-view { display: none; }
+    .trends-view.active { display: block; }
 </style>
 <h1>Team Trends</h1>
 <p class="subtitle">Updated nightly &mdash; click any column header to sort &mdash; {% timezone "America/New_York" %}{% now "F jS, Y" %}{% endtimezone %}</p>
 
-<h2 class="section-heading">Record &amp; Season Offense</h2>
+<div class="day-switcher" id="trends-tabs">
+    <a class="day-btn" data-view="season" href="#season">Season</a>
+    <a class="day-btn" data-view="recent" href="#recent">Recent Form</a>
+</div>
+
+<div class="trends-view" id="view-season">
 <div class="table-scroll condensed">
 <table id="record-table" class="trends-table">
     <thead>
@@ -33,7 +30,7 @@
             <th class="sortable" data-col="4" data-type="record"><span class="hide-mobile">Last 10</span><span class="show-mobile">L10</span></th>
             <th class="sortable" data-col="5" data-type="num"><span class="hide-mobile">Season AVG</span><span class="show-mobile">AVG</span></th>
             <th class="sortable" data-col="6" data-type="num"><span class="hide-mobile">Season OPS</span><span class="show-mobile">OPS</span></th>
-            <th class="sortable" data-col="7" data-type="num"><span class="hide-mobile">Season Runs</span><span class="show-mobile">R</span></th>
+            <th class="sortable" data-col="7" data-type="num"><span class="hide-mobile">Season R/G</span><span class="show-mobile">R/G</span></th>
             <th class="sortable" data-col="8" data-type="num"><span class="hide-mobile">Season SO</span><span class="show-mobile">SO</span></th>
         </tr>
     </thead>
@@ -58,7 +55,7 @@
 
             <td>{% if team.season_avg %}{{ team.season_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if team.season_ops %}{{ team.season_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if team.season_runs is not None %}{{ team.season_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if team.season_rpg is not None %}{{ team.season_rpg|floatformat:1 }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if team.season_strikeouts is not None %}{{ team.season_strikeouts }}{% else %}<span class="na">—</span>{% endif %}</td>
         </tr>
         {% empty %}
@@ -71,20 +68,24 @@
     </tbody>
 </table>
 </div>
+</div><!-- /view-season -->
 
-<h2 class="section-heading">Recent Form &mdash; Last 7 &amp; 14 Days</h2>
+<div class="trends-view" id="view-recent">
 <div class="table-scroll condensed">
 <table id="recent-table" class="trends-table">
     <thead>
         <tr>
             <th>#</th>
             <th class="sortable" data-col="1" data-type="text">Team</th>
-            <th class="sortable" data-col="2" data-type="num"><span class="hide-mobile">L7 AVG</span><span class="show-mobile">7 AVG</span></th>
-            <th class="sortable" data-col="3" data-type="num"><span class="hide-mobile">L7 OPS</span><span class="show-mobile">7 OPS</span></th>
-            <th class="sortable" data-col="4" data-type="num"><span class="hide-mobile">L7 Runs</span><span class="show-mobile">7 R</span></th>
-            <th class="sortable" data-col="5" data-type="num"><span class="hide-mobile">L14 AVG</span><span class="show-mobile">14 AVG</span></th>
-            <th class="sortable" data-col="6" data-type="num"><span class="hide-mobile">L14 OPS</span><span class="show-mobile">14 OPS</span></th>
-            <th class="sortable" data-col="7" data-type="num"><span class="hide-mobile">L14 Runs</span><span class="show-mobile">14 R</span></th>
+            <th class="sortable" data-col="2" data-type="record">Record</th>
+            <th class="sortable" data-col="3" data-type="streak"><span class="hide-mobile">Streak</span><span class="show-mobile">Strk</span></th>
+            <th class="sortable" data-col="4" data-type="record"><span class="hide-mobile">Last 10</span><span class="show-mobile">L10</span></th>
+            <th class="sortable" data-col="5" data-type="num"><span class="hide-mobile">L7 AVG</span><span class="show-mobile">7 AVG</span></th>
+            <th class="sortable" data-col="6" data-type="num"><span class="hide-mobile">L7 OPS</span><span class="show-mobile">7 OPS</span></th>
+            <th class="sortable" data-col="7" data-type="num"><span class="hide-mobile">L7 R/G</span><span class="show-mobile">7 R/G</span></th>
+            <th class="sortable" data-col="8" data-type="num"><span class="hide-mobile">L14 AVG</span><span class="show-mobile">14 AVG</span></th>
+            <th class="sortable" data-col="9" data-type="num"><span class="hide-mobile">L14 OPS</span><span class="show-mobile">14 OPS</span></th>
+            <th class="sortable" data-col="10" data-type="num"><span class="hide-mobile">L14 R/G</span><span class="show-mobile">14 R/G</span></th>
         </tr>
     </thead>
     <tbody>
@@ -92,16 +93,29 @@
         <tr>
             <td>{{ forloop.counter }}</td>
             <td class="team-col"><strong class="hide-mobile">{{ team.name }}</strong><strong class="show-mobile">{{ team|logo_abbr|upper|default:team.name }}</strong></td>
+            <td>{{ team.wins }}-{{ team.losses }}</td>
+
+            <td>
+                {% if team.streak_type == "W" %}
+                    <span class="streak-win">W{{ team.streak_length }}</span>
+                {% elif team.streak_type == "L" %}
+                    <span class="streak-loss">L{{ team.streak_length }}</span>
+                {% else %}
+                    <span class="na">—</span>
+                {% endif %}
+            </td>
+
+            <td>{{ team.last10_wins }}-{{ team.last10_losses }}</td>
 
             <td>{% if team.last7_avg %}{{ team.last7_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if team.last7_ops %}{{ team.last7_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
 
             <td>
-                {% if team.last7_runs is not None %}
-                    {% if team.last7_runs >= 35 %}
-                        <span class="hot">{{ team.last7_runs }}</span>
+                {% if team.last7_rpg is not None %}
+                    {% if team.last7_rpg >= 5 %}
+                        <span class="hot">{{ team.last7_rpg|floatformat:1 }}</span>
                     {% else %}
-                        {{ team.last7_runs }}
+                        {{ team.last7_rpg|floatformat:1 }}
                     {% endif %}
                 {% else %}
                     <span class="na">—</span>
@@ -112,11 +126,11 @@
             <td>{% if team.last14_ops %}{{ team.last14_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
 
             <td>
-                {% if team.last14_runs is not None %}
-                    {% if team.last14_runs >= 70 %}
-                        <span class="hot">{{ team.last14_runs }}</span>
+                {% if team.last14_rpg is not None %}
+                    {% if team.last14_rpg >= 5 %}
+                        <span class="hot">{{ team.last14_rpg|floatformat:1 }}</span>
                     {% else %}
-                        {{ team.last14_runs }}
+                        {{ team.last14_rpg|floatformat:1 }}
                     {% endif %}
                 {% else %}
                     <span class="na">—</span>
@@ -125,7 +139,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="8" style="text-align:center; padding: 40px; color: var(--text-muted);">
+            <td colspan="11" style="text-align:center; padding: 40px; color: var(--text-muted);">
                 No team data available yet. Run <code>python manage.py fetch_games</code> to populate.
             </td>
         </tr>
@@ -133,6 +147,7 @@
     </tbody>
 </table>
 </div>
+</div><!-- /view-recent -->
 
 <script>
 (function () {
@@ -197,6 +212,27 @@
             sortTable(table, parseInt(th.dataset.col, 10), th.dataset.type);
         });
     });
+
+    // --- Season / Recent tab switching -------------------------------------
+    const tabs = document.querySelectorAll("#trends-tabs .day-btn");
+
+    function showView(view) {
+        if (view !== "recent") view = "season";
+        tabs.forEach(function (t) {
+            t.classList.toggle("active", t.dataset.view === view);
+        });
+        document.querySelectorAll(".trends-view").forEach(function (v) {
+            v.classList.toggle("active", v.id === "view-" + view);
+        });
+    }
+
+    tabs.forEach(function (t) {
+        t.addEventListener("click", function () {
+            showView(t.dataset.view);
+        });
+    });
+
+    showView((location.hash || "").replace("#", ""));
 })();
 </script>
 {% endblock %}

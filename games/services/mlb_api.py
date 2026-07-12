@@ -116,6 +116,7 @@ def _get_team_hitting_last_days(days, season=2026):
                 "avg": stat.get("avg"),
                 "ops": stat.get("ops"),
                 "runs": safe_int(stat.get("runs")),
+                "games": safe_int(stat.get("gamesPlayed")),
             }
     return result
 
