@@ -9,6 +9,28 @@
     #trends-tabs { margin-bottom: 22px; }
     .trends-view { display: none; }
     .trends-view.active { display: block; }
+    .recent-legend { display: none; }
+
+    @media (max-width: 860px) {
+        /* Recent-form table: collapse each stat's separate 7d & 14d columns into
+           one column, stacking the 14-day value (muted) under the 7-day value so
+           all six hitting stats fit a phone with no sideways scroll. */
+        #recent-table .l14-col { display: none; }
+        #recent-table .l7-col::after {
+            content: attr(data-l14);
+            display: block;
+            margin-top: 2px;
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+        .recent-legend {
+            display: block;
+            margin: -8px 0 12px;
+            font-size: 11.5px;
+            color: var(--text-muted);
+        }
+    }
 </style>
 <h1>Team Trends</h1>
 <p class="subtitle">Updated nightly &mdash; click any column header to sort &mdash; {% timezone "America/New_York" %}{% now "F jS, Y" %}{% endtimezone %}</p>
@@ -71,6 +93,7 @@
 </div><!-- /view-season -->
 
 <div class="trends-view" id="view-recent">
+<p class="recent-legend">Each AVG / OPS / R·G cell shows <strong>7-day</strong> over <span style="color:var(--text-muted)">14-day</span>.</p>
 <div class="table-scroll condensed">
 <table id="recent-table" class="trends-table">
     <thead>
@@ -80,12 +103,12 @@
             <th class="sortable" data-col="2" data-type="record">Record</th>
             <th class="sortable" data-col="3" data-type="streak"><span class="hide-mobile">Streak</span><span class="show-mobile">Strk</span></th>
             <th class="sortable" data-col="4" data-type="record"><span class="hide-mobile">Last 10</span><span class="show-mobile">L10</span></th>
-            <th class="sortable" data-col="5" data-type="num"><span class="hide-mobile">L7 AVG</span><span class="show-mobile">7 AVG</span></th>
-            <th class="sortable" data-col="6" data-type="num"><span class="hide-mobile">L7 OPS</span><span class="show-mobile">7 OPS</span></th>
-            <th class="sortable" data-col="7" data-type="num"><span class="hide-mobile">L7 R/G</span><span class="show-mobile">7 R/G</span></th>
-            <th class="sortable" data-col="8" data-type="num"><span class="hide-mobile">L14 AVG</span><span class="show-mobile">14 AVG</span></th>
-            <th class="sortable" data-col="9" data-type="num"><span class="hide-mobile">L14 OPS</span><span class="show-mobile">14 OPS</span></th>
-            <th class="sortable" data-col="10" data-type="num"><span class="hide-mobile">L14 R/G</span><span class="show-mobile">14 R/G</span></th>
+            <th class="sortable" data-col="5" data-type="num"><span class="hide-mobile">L7 AVG</span><span class="show-mobile">AVG</span></th>
+            <th class="sortable" data-col="6" data-type="num"><span class="hide-mobile">L7 OPS</span><span class="show-mobile">OPS</span></th>
+            <th class="sortable" data-col="7" data-type="num"><span class="hide-mobile">L7 R/G</span><span class="show-mobile">R/G</span></th>
+            <th class="sortable l14-col" data-col="8" data-type="num">L14 AVG</th>
+            <th class="sortable l14-col" data-col="9" data-type="num">L14 OPS</th>
+            <th class="sortable l14-col" data-col="10" data-type="num">L14 R/G</th>
         </tr>
     </thead>
     <tbody>
@@ -107,10 +130,10 @@
 
             <td>{{ team.last10_wins }}-{{ team.last10_losses }}</td>
 
-            <td>{% if team.last7_avg %}{{ team.last7_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if team.last7_ops %}{{ team.last7_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td class="l7-col" data-l14="{% if team.last14_avg %}{{ team.last14_avg }}{% else %}—{% endif %}">{% if team.last7_avg %}{{ team.last7_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td class="l7-col" data-l14="{% if team.last14_ops %}{{ team.last14_ops }}{% else %}—{% endif %}">{% if team.last7_ops %}{{ team.last7_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
 
-            <td>
+            <td class="l7-col" data-l14="{% if team.last14_rpg is not None %}{{ team.last14_rpg|floatformat:1 }}{% else %}—{% endif %}">
                 {% if team.last7_rpg is not None %}
                     {% if team.last7_rpg >= 5 %}
                         <span class="hot">{{ team.last7_rpg|floatformat:1 }}</span>
@@ -122,10 +145,10 @@
                 {% endif %}
             </td>
 
-            <td>{% if team.last14_avg %}{{ team.last14_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
-            <td>{% if team.last14_ops %}{{ team.last14_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td class="l14-col">{% if team.last14_avg %}{{ team.last14_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td class="l14-col">{% if team.last14_ops %}{{ team.last14_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
 
-            <td>
+            <td class="l14-col">
                 {% if team.last14_rpg is not None %}
                     {% if team.last14_rpg >= 5 %}
                         <span class="hot">{{ team.last14_rpg|floatformat:1 }}</span>
