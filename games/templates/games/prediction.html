@@ -146,7 +146,7 @@
 </div>
 
 <div class="section-heading">Team Stats</div>
-<div class="table-scroll cmp" style="--rows:11">
+<div class="table-scroll cmp" style="--rows:12">
 <table>
     <thead>
         <tr>
@@ -301,7 +301,7 @@
                     <tr class="away-row">
                         <td>{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %} <span class="team-badge badge-away">Away</span></td>
                         {% for cell in away_splits %}
-                        <td class="split heat"{% if cell.bg %} style="background: {{ cell.bg }};"{% endif %}>
+                        <td class="split heat {{ cell.heat_class }}">
                             {% if cell.avg or cell.ops %}{{ cell.avg|default:"—" }} / {{ cell.ops|default:"—" }}{% if cell.bf %}<span class="pa-note"> ({{ cell.bf }} BF)</span>{% endif %}{% else %}<span class="na">—</span>{% endif %}
                         </td>
                         {% endfor %}
@@ -309,7 +309,7 @@
                     <tr class="home-row">
                         <td>{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% else %}<span class="na">TBA</span>{% endif %} <span class="team-badge badge-home">Home</span></td>
                         {% for cell in home_splits %}
-                        <td class="split heat"{% if cell.bg %} style="background: {{ cell.bg }};"{% endif %}>
+                        <td class="split heat {{ cell.heat_class }}">
                             {% if cell.avg or cell.ops %}{{ cell.avg|default:"—" }} / {{ cell.ops|default:"—" }}{% if cell.bf %}<span class="pa-note"> ({{ cell.bf }} BF)</span>{% endif %}{% else %}<span class="na">—</span>{% endif %}
                         </td>
                         {% endfor %}

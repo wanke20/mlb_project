@@ -110,38 +110,31 @@ def _parse_rate(v):
 OPS_HEAT_LOW = 0.600
 OPS_HEAT_MID = 0.720
 OPS_HEAT_HIGH = 0.850
-_HEAT_GREEN = (61, 220, 151)
-_HEAT_YELLOW = (249, 226, 175)
-_HEAT_RED = (243, 139, 168)
 
 
-def _lerp_rgb(a, b, t):
-    return tuple(round(a[i] + (b[i] - a[i]) * t) for i in range(3))
-
-
-def _ops_heat_color(ops):
-    """Translucent heat background for an opponent-OPS value (green->red).
-
-    Returns an ``rgba(...)`` string, or ``""`` when the OPS is missing.
-    """
+def _ops_heat_class(ops):
+    """CSS heat bucket for an opponent-OPS value."""
     v = _parse_rate(ops)
     if v is None:
         return ""
-    v = max(OPS_HEAT_LOW, min(OPS_HEAT_HIGH, v))
+    if v <= 0.640:
+        return "heat-elite"
+    if v <= 0.680:
+        return "heat-strong"
     if v <= OPS_HEAT_MID:
-        t = (v - OPS_HEAT_LOW) / (OPS_HEAT_MID - OPS_HEAT_LOW)
-        r, g, b = _lerp_rgb(_HEAT_GREEN, _HEAT_YELLOW, t)
-    else:
-        t = (v - OPS_HEAT_MID) / (OPS_HEAT_HIGH - OPS_HEAT_MID)
-        r, g, b = _lerp_rgb(_HEAT_YELLOW, _HEAT_RED, t)
-    return f"rgba({r}, {g}, {b}, 0.30)"
+        return "heat-average"
+    if v <= 0.765:
+        return "heat-warm"
+    if v <= 0.810:
+        return "heat-hot"
+    return "heat-danger"
 
 
 def _pitcher_splits(pitcher):
     """Ordered split cells (vs LHB/RHB, Home, Away) for the heatmap table.
 
     Always returns four cells so the row renders even for a TBA starter; each
-    carries its AVG/OPS/BF and a heat background derived from opponent OPS.
+    carries its AVG/OPS/BF and a heat class derived from opponent OPS.
     """
     specs = [
         ("vs LHB", "vs_l_avg", "vs_l_ops", "vs_l_bf"),
@@ -157,7 +150,7 @@ def _pitcher_splits(pitcher):
             "avg": getattr(pitcher, avg_attr, None) if pitcher else None,
             "ops": ops,
             "bf": getattr(pitcher, bf_attr, None) if pitcher else None,
-            "bg": _ops_heat_color(ops),
+            "heat_class": _ops_heat_class(ops),
         })
     return cells
 

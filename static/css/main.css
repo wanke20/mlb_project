@@ -728,9 +728,15 @@ tr.avg-row .player-name { color: var(--text-muted); text-transform: uppercase; l
 .hitter-pop .hp-k { color: var(--text-faint); text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; font-weight: 700; align-self: center; }
 
 /* ---- Pitching-splits heatmap ----------------------------------------- */
-/* Split cells get an inline rgba() background (computed in the view) that
-   shades opponent-OPS from green (dominant) to red (hittable). */
+/* Split cells are bucketed by opponent OPS from green (dominant) to red
+   (hittable). Specific selectors keep the heat color in mobile .cmp mode. */
 .heat-table td.heat { text-align: center; font-variant-numeric: tabular-nums; }
+.cmp.heat-table tr td.heat.heat-elite  { background: rgba(61, 220, 151, 0.30); }
+.cmp.heat-table tr td.heat.heat-strong { background: rgba(124, 222, 159, 0.30); }
+.cmp.heat-table tr td.heat.heat-average { background: rgba(249, 226, 175, 0.30); }
+.cmp.heat-table tr td.heat.heat-warm   { background: rgba(247, 196, 173, 0.30); }
+.cmp.heat-table tr td.heat.heat-hot    { background: rgba(245, 166, 171, 0.30); }
+.cmp.heat-table tr td.heat.heat-danger { background: rgba(243, 139, 168, 0.30); }
 .heat-legend {
     display: flex;
     align-items: center;
