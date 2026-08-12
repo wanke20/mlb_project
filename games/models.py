@@ -111,6 +111,12 @@ class Game(models.Model):
 
     postponed = models.BooleanField(default=False)
 
+    # American moneyline odds (e.g. -140, +125). RotoWire only publishes the
+    # favorite's line, so the underdog side is derived from it — see
+    # games/services/lineups.py:derive_underdog_moneyline.
+    home_moneyline = models.IntegerField(null=True, blank=True)
+    away_moneyline = models.IntegerField(null=True, blank=True)
+
     home_score = models.IntegerField(null=True, blank=True)
     away_score = models.IntegerField(null=True, blank=True)
     home_starter_runs = models.IntegerField(null=True, blank=True)

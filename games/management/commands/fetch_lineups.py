@@ -21,7 +21,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from games.models import Team, Pitcher, Game, Hitter
-from games.services.lineups import fetch_projected_lineups
+from games.services.lineups import fetch_projected_lineups, derive_underdog_moneyline
 from games.services.player_ids import resolve_player_id, resolve_players
 from games.services.mlb_api import get_pitcher_stats, get_hitter_details, get_teams
 from games.services.savant_stats import get_savant_leaderboard
@@ -114,6 +114,7 @@ class Command(BaseCommand):
                     logger.warning(f"Unmatched RotoWire team abbreviation: {abbr}")
 
             self._fill_starters(target_date, by_id)
+            self._fill_moneylines(target_date, by_id, canon_to_team_id)
             resolved_by_date[target_date] = self._resolve_lineups(target_date, by_id)
 
         # Fetch splits once per unique hitter across both dates.
@@ -203,6 +204,48 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(
             f"[{target_date}] Filled {filled} missing starter(s) from RotoWire."
+        ))
+
+    # ------------------------------------------------------------------
+    # Moneylines: store the favorite's line and the derived underdog line.
+    # ------------------------------------------------------------------
+    def _fill_moneylines(self, target_date, by_id, canon_to_team_id):
+        games = Game.objects.filter(date=target_date).select_related(
+            "home_team", "away_team"
+        )
+
+        updated = 0
+        for game in games:
+            # Both teams in a RotoWire box carry the same odds, but only one may
+            # have a resolved lineup dict — take the first that has a line.
+            fav_abbr = fav_ml = None
+            for team in (game.home_team, game.away_team):
+                lineup = by_id.get(team.mlb_id)
+                if lineup and lineup.get("fav_moneyline") is not None:
+                    fav_abbr = lineup.get("fav_abbr")
+                    fav_ml = lineup.get("fav_moneyline")
+                    break
+            if fav_ml is None or not fav_abbr:
+                continue
+
+            fav_team_id = canon_to_team_id.get(_canon(fav_abbr))
+            dog_ml = derive_underdog_moneyline(fav_ml)
+            if fav_team_id == game.home_team.mlb_id:
+                game.home_moneyline, game.away_moneyline = fav_ml, dog_ml
+            elif fav_team_id == game.away_team.mlb_id:
+                game.away_moneyline, game.home_moneyline = fav_ml, dog_ml
+            else:
+                logger.warning(
+                    f"Moneyline favorite '{fav_abbr}' matched neither team in "
+                    f"{game.away_team.name} @ {game.home_team.name}"
+                )
+                continue
+
+            game.save(update_fields=["home_moneyline", "away_moneyline"])
+            updated += 1
+
+        self.stdout.write(self.style.SUCCESS(
+            f"[{target_date}] Set moneylines for {updated} game(s)."
         ))
 
     # ------------------------------------------------------------------
