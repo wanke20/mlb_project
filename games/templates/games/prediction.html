@@ -146,7 +146,7 @@
 </div>
 
 <div class="section-heading">Team Stats</div>
-<div class="table-scroll cmp" style="--rows:12">
+<div class="table-scroll cmp" style="--rows:13">
 <table>
     <thead>
         <tr>
@@ -162,6 +162,7 @@
             <th>L14 AVG</th>
             <th>L14 OPS</th>
             <th>L14 R/G</th>
+            <th>Line</th>
         </tr>
     </thead>
     <tbody>
@@ -178,6 +179,7 @@
             <td>{% if game.away_team.last14_avg %}{{ game.away_team.last14_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.away_team.last14_ops %}{{ game.away_team.last14_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.away_team.last14_rpg is not None %}{{ game.away_team.last14_rpg|floatformat:1 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.away_moneyline_display %}{{ game.away_moneyline_display }}{% else %}<span class="na">—</span>{% endif %}</td>
         </tr>
         <tr class="home-row">
             <td>{{ game.home_team.name }} <span class="team-badge badge-home">Home</span></td>
@@ -192,6 +194,7 @@
             <td>{% if game.home_team.last14_avg %}{{ game.home_team.last14_avg }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.home_team.last14_ops %}{{ game.home_team.last14_ops }}{% else %}<span class="na">—</span>{% endif %}</td>
             <td>{% if game.home_team.last14_rpg is not None %}{{ game.home_team.last14_rpg|floatformat:1 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if game.home_moneyline_display %}{{ game.home_moneyline_display }}{% else %}<span class="na">—</span>{% endif %}</td>
         </tr>
     </tbody>
 </table>

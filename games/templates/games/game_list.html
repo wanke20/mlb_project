@@ -78,6 +78,7 @@
     <div class="team-info">
         {{ game.away_team.name }}
         <span class="rec">{{ game.away_team.wins }}-{{ game.away_team.losses }} · L10 {{ game.away_team.last10_wins }}-{{ game.away_team.last10_losses }}</span>
+        {% if game.away_moneyline_display %}<span class="ml-badge">{{ game.away_moneyline_display }}</span>{% endif %}
     </div>
     <div class="pitcher-info">
         Away SP:
@@ -93,6 +94,7 @@
     <div class="team-info">
         {{ game.home_team.name }}
         <span class="rec">{{ game.home_team.wins }}-{{ game.home_team.losses }} · L10 {{ game.home_team.last10_wins }}-{{ game.home_team.last10_losses }}</span>
+        {% if game.home_moneyline_display %}<span class="ml-badge">{{ game.home_moneyline_display }}</span>{% endif %}
     </div>
     <div class="pitcher-info">
         Home SP:

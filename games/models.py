@@ -127,6 +127,21 @@ class Game(models.Model):
     def __str__(self):
         return f"{self.away_team} @ {self.home_team}"
 
+    @staticmethod
+    def _format_moneyline(ml):
+        """American odds as a signed string ('-140', '+117'), or None."""
+        if ml is None:
+            return None
+        return f"+{ml}" if ml > 0 else str(ml)
+
+    @property
+    def home_moneyline_display(self):
+        return self._format_moneyline(self.home_moneyline)
+
+    @property
+    def away_moneyline_display(self):
+        return self._format_moneyline(self.away_moneyline)
+
 
 class Hitter(models.Model):
     mlb_id = models.IntegerField()
