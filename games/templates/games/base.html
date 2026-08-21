@@ -23,15 +23,15 @@
             <span></span><span></span><span></span>
         </label>
         <div class="nav-menu">
-            <a class="nav-link" href="{% url 'game_list' %}">Games</a>
-            <a class="nav-link" href="{% url 'trends' %}">Trends</a>
-            <a class="nav-link" href="{% url 'pitcher_list' %}">Starters</a>
-            <a class="nav-link" href="{% url 'weather' %}">Weather</a>
-            {% if user.is_authenticated %}
-                <a class="nav-link" href="{% url 'dashboard' %}">My Picks</a>
-            {% endif %}
+            {% with cur=request.resolver_match.url_name %}
+            <a class="nav-link {% if cur == 'game_list' or cur == 'game_prediction' %}active{% endif %}" href="{% url 'game_list' %}">Games</a>
+            <a class="nav-link {% if cur == 'trends' %}active{% endif %}" href="{% url 'trends' %}">Trends</a>
+            <a class="nav-link {% if cur == 'pitcher_list' or cur == 'pitcher_detail' %}active{% endif %}" href="{% url 'pitcher_list' %}">Starters</a>
+            <a class="nav-link {% if cur == 'weather' %}active{% endif %}" href="{% url 'weather' %}">Weather</a>
             <span class="nav-spacer"></span>
+            <span class="nav-divider" aria-hidden="true"></span>
             {% if user.is_authenticated %}
+                <a class="nav-link {% if cur == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">My Picks</a>
                 <div class="nav-user">
                     <span class="who">{{ user.email|default:user.username }}</span>
                     <form method="post" action="{% url 'logout' %}" style="display:inline;">
@@ -43,6 +43,7 @@
                 <a class="nav-link" href="{% url 'login' %}">Log in</a>
                 <a class="btn btn-primary btn-sm" href="{% url 'signup' %}">Sign up</a>
             {% endif %}
+            {% endwith %}
         </div>
     </div>
 </nav>

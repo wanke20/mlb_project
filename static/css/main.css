@@ -132,6 +132,15 @@ body {
 
 .nav-spacer { flex: 1; }
 
+/* Thin rule separating the browse links from the account area. */
+.nav-divider {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+    margin: 0 10px 0 4px;
+    flex: none;
+}
+
 /* Hamburger toggle — hidden on desktop, revealed in the mobile media query. */
 .nav-toggle-cb { display: none; }
 .nav-toggle {
@@ -1005,6 +1014,8 @@ tr.avg-row .player-name { color: var(--text-muted); text-transform: uppercase; l
 
     .nav-menu .nav-link { padding: 11px 12px; font-size: 15px; border-radius: 9px; }
     .nav-spacer { display: none; }
+    /* In the stacked mobile menu the divider becomes a full-width rule. */
+    .nav-divider { width: auto; height: 1px; margin: 6px 2px; align-self: stretch; }
     .nav-menu .btn-sm { width: 100%; justify-content: center; padding: 11px 14px; font-size: 15px; }
     .nav-user {
         flex-direction: column;
