@@ -257,6 +257,8 @@ class Command(BaseCommand):
                             "strikeouts": pitcher_stats["strikeouts"],
                             "walks": pitcher_stats["walks"],
                             "innings_pitched": pitcher_stats["innings_pitched"],
+                            "wins": pitcher_stats.get("wins"),
+                            "losses": pitcher_stats.get("losses"),
                             "fip": pitcher_stats.get("fip"),
                             "k_bb_pct": pitcher_stats.get("k_bb_pct"),
                             "vs_l_avg": pitcher_stats.get("vs_l_avg"),

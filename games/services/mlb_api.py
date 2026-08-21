@@ -272,6 +272,8 @@ EMPTY_PITCHER_STATS = {
     "strikeouts": None,
     "walks": None,
     "innings_pitched": None,
+    "wins": None,
+    "losses": None,
     "fip": None,
     "k_bb_pct": None,
     # Opponent AVG / OPS against, by handedness and home/away, with batters
@@ -332,10 +334,71 @@ def get_pitcher_stats(pitcher_id):
                 result["strikeouts"] = safe_int(stat.get("strikeOuts"))
                 result["walks"] = safe_int(stat.get("baseOnBalls"))
                 result["innings_pitched"] = stat.get("inningsPitched")
+                result["wins"] = safe_int(stat.get("wins"))
+                result["losses"] = safe_int(stat.get("losses"))
                 result["fip"] = _compute_fip(stat)
                 result["k_bb_pct"] = _compute_k_bb_pct(stat)
 
     return result
+
+
+def get_pitcher_game_log(pitcher_id, season=2026):
+    """Return a pitcher's per-appearance game log for the season, newest first.
+
+    Each entry describes one appearance: the date, opponent, home/away, the
+    won/lost/save/hold decision, and the game line (IP, ER, H, K, BB, HR,
+    pitches). Starts and relief outings are both included; ``games_started``
+    lets the caller distinguish them. Returns [] on any error or no data so the
+    page still renders.
+    """
+    url = f"{BASE_URL}/people/{pitcher_id}/stats"
+    params = {"stats": "gameLog", "group": "pitching", "season": season}
+    try:
+        r = _session.get(url, params=params, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+    except Exception:
+        return []
+
+    stats = data.get("stats", [])
+    splits = stats[0].get("splits", []) if stats else []
+
+    log = []
+    for split in splits:
+        stat = split.get("stat", {})
+        # Decision: at most one of W/L/SV/HLD is set for a given appearance.
+        if safe_int(stat.get("wins")):
+            decision = "W"
+        elif safe_int(stat.get("losses")):
+            decision = "L"
+        elif safe_int(stat.get("saves")):
+            decision = "SV"
+        elif safe_int(stat.get("holds")):
+            decision = "HLD"
+        else:
+            decision = None
+
+        log.append({
+            "date": split.get("date"),
+            "game_id": split.get("game", {}).get("gamePk"),
+            "team": split.get("team", {}).get("name"),
+            "opponent": split.get("opponent", {}).get("name"),
+            "is_home": split.get("isHome"),
+            "games_started": safe_int(stat.get("gamesStarted")) or 0,
+            "decision": decision,
+            "innings_pitched": stat.get("inningsPitched"),
+            "earned_runs": safe_int(stat.get("earnedRuns")),
+            "hits": safe_int(stat.get("hits")),
+            "strikeouts": safe_int(stat.get("strikeOuts")),
+            "walks": safe_int(stat.get("baseOnBalls")),
+            "home_runs": safe_int(stat.get("homeRuns")),
+            "pitches": safe_int(stat.get("numberOfPitches")),
+            "era": safe_float(stat.get("era")),
+        })
+
+    # gameLog comes oldest-first; present most-recent starts at the top.
+    log.reverse()
+    return log
 
 
 def get_team_roster(team_id, season=2026):

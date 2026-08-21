@@ -208,11 +208,11 @@
             <tr>
                 <th class="metric">Metric</th>
                 <th>
-                    <span class="pc-name">{% if game.away_pitcher %}{{ game.away_pitcher.name }}{% if game.away_pitcher.throws %} <span class="hand-badge">{{ game.away_pitcher.throws }}HP</span>{% endif %}{% else %}<span class="na">TBA</span>{% endif %}</span>
+                    <span class="pc-name">{% if game.away_pitcher %}<a href="{% url 'pitcher_detail' game.away_pitcher.mlb_id %}">{{ game.away_pitcher.name }}</a>{% if game.away_pitcher.throws %} <span class="hand-badge">{{ game.away_pitcher.throws }}HP</span>{% endif %}{% else %}<span class="na">TBA</span>{% endif %}</span>
                     <span class="pc-team"><span class="team-badge badge-away">Away</span> {{ game.away_team.name }}</span>
                 </th>
                 <th>
-                    <span class="pc-name">{% if game.home_pitcher %}{{ game.home_pitcher.name }}{% if game.home_pitcher.throws %} <span class="hand-badge">{{ game.home_pitcher.throws }}HP</span>{% endif %}{% else %}<span class="na">TBA</span>{% endif %}</span>
+                    <span class="pc-name">{% if game.home_pitcher %}<a href="{% url 'pitcher_detail' game.home_pitcher.mlb_id %}">{{ game.home_pitcher.name }}</a>{% if game.home_pitcher.throws %} <span class="hand-badge">{{ game.home_pitcher.throws }}HP</span>{% endif %}{% else %}<span class="na">TBA</span>{% endif %}</span>
                     <span class="pc-team"><span class="team-badge badge-home">Home</span> {{ game.home_team.name }}</span>
                 </th>
             </tr>

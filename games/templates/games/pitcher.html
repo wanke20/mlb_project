@@ -1,0 +1,224 @@
+{% extends "games/base.html" %}
+
+{% block title %}{{ pitcher.name }} — Pitcher{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<style>
+    .section-heading {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        border-left: 3px solid var(--accent);
+        padding-left: 10px;
+        margin: 32px 0 14px;
+    }
+
+    /* Pitcher page header */
+    .pitcher-head {
+        display: flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 4px;
+    }
+    .pitcher-head h1 { margin: 0; }
+    .pitcher-record {
+        font-size: 15px;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    .hand-badge {
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 4px;
+        vertical-align: middle;
+        background: rgba(249, 226, 175, 0.15);
+        color: #f9e2af;
+        letter-spacing: 0.04em;
+    }
+
+    /* Stat card grid */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 12px;
+    }
+    .stat-cell {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 12px 14px;
+    }
+    .stat-cell .k {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    .stat-cell .v { font-size: 22px; font-weight: 700; }
+
+    /* ERA color coding (matches prediction page thresholds) */
+    .era-elite  { color: #a6e3a1; font-weight: 600; }
+    .era-good   { color: #94d8a0; }
+    .era-avg    { color: var(--text); }
+    .era-poor   { color: var(--orange); }
+    .era-bad    { color: var(--red); font-weight: 600; }
+
+    /* Decision badges in the game log */
+    .dec { font-weight: 700; font-size: 11px; padding: 1px 6px; border-radius: 4px; }
+    .dec-W   { background: rgba(166, 227, 161, 0.15); color: var(--green); }
+    .dec-L   { background: rgba(243, 139, 168, 0.15); color: var(--red); }
+    .dec-SV, .dec-HLD { background: rgba(137, 180, 250, 0.15); color: var(--accent); }
+
+    .gs-note { font-size: 10px; color: var(--text-faint); margin-left: 4px; }
+
+    .radar-wrap { position: relative; height: 320px; max-width: 460px; margin: 0 auto; }
+    .chart-sub { font-size: 12px; color: var(--text-muted); margin: 2px 0 8px; }
+
+    .empty-note { color: var(--text-muted); padding: 14px 0; }
+</style>
+
+<div class="pitcher-head">
+    <h1>{{ pitcher.name }}</h1>
+    {% if pitcher.throws %}<span class="hand-badge">{{ pitcher.throws }}HP</span>{% endif %}
+    {% if team_name %}<span class="pitcher-record">{{ team_name }}</span>{% endif %}
+</div>
+
+<div class="section-heading">Season Stats</div>
+<div class="stat-grid">
+    <div class="stat-cell">
+        <div class="k">ERA</div>
+        <div class="v">{% if pitcher.era is not None %}{% if pitcher.era < 3.0 %}<span class="era-elite">{{ pitcher.era }}</span>{% elif pitcher.era < 4.0 %}<span class="era-good">{{ pitcher.era }}</span>{% elif pitcher.era < 5.0 %}<span class="era-avg">{{ pitcher.era }}</span>{% elif pitcher.era < 6.0 %}<span class="era-poor">{{ pitcher.era }}</span>{% else %}<span class="era-bad">{{ pitcher.era }}</span>{% endif %}{% else %}<span class="na">—</span>{% endif %}</div>
+    </div>
+    <div class="stat-cell"><div class="k">WHIP</div><div class="v">{% if pitcher.whip is not None %}{{ pitcher.whip }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">FIP</div><div class="v">{% if pitcher.fip is not None %}{{ pitcher.fip|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">xERA</div><div class="v">{% if pitcher.xera is not None %}{{ pitcher.xera|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">wOBA</div><div class="v">{% if pitcher.woba is not None %}{{ pitcher.woba|floatformat:3 }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">xwOBA</div><div class="v">{% if pitcher.xwoba is not None %}{{ pitcher.xwoba|floatformat:3 }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">K-BB%</div><div class="v">{% if pitcher.k_bb_pct is not None %}{{ pitcher.k_bb_pct|floatformat:1 }}%{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">Barrel%</div><div class="v">{% if pitcher.barrel_pct is not None %}{{ pitcher.barrel_pct|floatformat:1 }}%{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">IP</div><div class="v">{% if pitcher.innings_pitched %}{{ pitcher.innings_pitched }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">SO</div><div class="v">{% if pitcher.strikeouts is not None %}{{ pitcher.strikeouts }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">BB</div><div class="v">{% if pitcher.walks is not None %}{{ pitcher.walks }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">Record</div><div class="v">{% if pitcher.record_display %}{{ pitcher.record_display }}{% else %}<span class="na">—</span>{% endif %}</div></div>
+    <div class="stat-cell"><div class="k">Run support</div><div class="v">{% if run_support_avg is not None %}{{ run_support_avg }}<span class="gs-note">R/GS · {{ run_support_starts }}</span>{% else %}<span class="na">—</span>{% endif %}</div></div>
+</div>
+
+{% if pitcher_radar_available %}
+<div class="section-heading">Quality Profile</div>
+<div class="chart-sub">Scaled 0–100 · outer = better · rate/quality stats only</div>
+<div class="radar-wrap"><canvas id="pitcherRadar"></canvas></div>
+{% endif %}
+
+<div class="section-heading">Pitching Splits <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0;">— opponent AVG / OPS against</span></div>
+<div class="table-scroll cmp heat-table" style="--rows:2">
+<table>
+    <thead>
+        <tr><th>vs LHB</th><th>vs RHB</th><th>Home</th><th>Away</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            {% for cell in splits %}
+            <td class="split heat {{ cell.heat_class }}">
+                {% if cell.avg or cell.ops %}{{ cell.avg|default:"—" }} / {{ cell.ops|default:"—" }}{% if cell.bf %}<span class="pa-note"> ({{ cell.bf }} BF)</span>{% endif %}{% else %}<span class="na">—</span>{% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div class="section-heading">Game Log</div>
+{% if game_log %}
+<div class="table-scroll condensed">
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Opponent</th>
+            <th>Dec</th>
+            <th>IP</th>
+            <th>ER</th>
+            <th>H</th>
+            <th>K</th>
+            <th>BB</th>
+            <th>HR</th>
+            <th>P</th>
+            <th>Game ERA</th>
+            <th>Run Support</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for g in game_log %}
+        <tr>
+            <td>{{ g.date }}</td>
+            <td>{% if g.is_home %}vs{% else %}@{% endif %} {{ g.opponent|default:"—" }}{% if not g.games_started %}<span class="gs-note">(relief)</span>{% endif %}</td>
+            <td>{% if g.decision %}<span class="dec dec-{{ g.decision }}">{{ g.decision }}</span>{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{{ g.innings_pitched|default:"—" }}</td>
+            <td>{% if g.earned_runs is not None %}{{ g.earned_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if g.hits is not None %}{{ g.hits }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if g.strikeouts is not None %}{{ g.strikeouts }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if g.walks is not None %}{{ g.walks }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if g.home_runs is not None %}{{ g.home_runs }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if g.pitches is not None %}{{ g.pitches }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if g.era is not None %}{{ g.era|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td>{% if g.run_support is not None %}{{ g.run_support }}{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<p class="chart-sub">Run support shows the pitcher's team's total runs in that game, for games in our database.</p>
+{% else %}
+<p class="empty-note">No game log available for this season.</p>
+{% endif %}
+
+{% if pitcher_radar_available %}
+<script>
+(function () {
+    const COLOR = '#5b9bff';
+    const pr = JSON.parse('{{ pitcher_radar_chart|escapejs }}');
+    new Chart(document.getElementById('pitcherRadar'), {
+        type: 'radar',
+        data: {
+            labels: pr.labels,
+            datasets: [
+                { label: pr.pitcher, data: pr.scores, rawvals: pr.raw,
+                  borderColor: COLOR, backgroundColor: 'rgba(91,155,255,0.15)', borderWidth: 2,
+                  pointBackgroundColor: COLOR, pointRadius: 3, spanGaps: true }
+            ]
+        },
+        options: {
+            animation: false, responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => {
+                    const rv = ctx.dataset.rawvals ? ctx.dataset.rawvals[ctx.dataIndex] : null;
+                    return ctx.dataset.label + ': ' + (rv != null ? rv : '—');
+                } } }
+            },
+            scales: {
+                r: {
+                    min: 0, max: 100,
+                    ticks: { display: false, stepSize: 25 },
+                    grid: { color: '#2a3040' },
+                    angleLines: { color: '#2a3040' },
+                    pointLabels: { color: '#8a93a6', font: { size: 12 } }
+                }
+            }
+        }
+    });
+})();
+</script>
+{% endif %}
+
+{% endblock %}

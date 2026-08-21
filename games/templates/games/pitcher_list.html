@@ -1,0 +1,145 @@
+{% extends "games/base.html" %}
+
+{% block title %}Projected Starters{% endblock %}
+
+{% block content %}
+<style>
+    /* ERA color coding (matches the pitcher/prediction pages) */
+    .era-elite  { color: #a6e3a1; font-weight: 600; }
+    .era-good   { color: #94d8a0; }
+    .era-avg    { color: var(--text); }
+    .era-poor   { color: var(--orange); }
+    .era-bad    { color: var(--red); font-weight: 600; }
+
+    .hand-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 4px;
+        margin-left: 4px;
+        vertical-align: middle;
+        background: rgba(249, 226, 175, 0.15);
+        color: #f9e2af;
+        letter-spacing: 0.04em;
+    }
+
+    .sp-name { font-weight: 600; }
+    .sp-matchup { color: var(--text-muted); }
+
+    /* Sortable column headers */
+    th.sortable {
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+    th.sortable:hover { color: var(--text); }
+    th.sortable .arrow {
+        opacity: 0.35;
+        font-size: 10px;
+        margin-left: 3px;
+    }
+    th.sortable.sorted .arrow { opacity: 1; color: var(--accent); }
+</style>
+
+<div class="page-header">
+    <div>
+        <h1>
+            {% if selected_day == "yesterday" %}Yesterday's Starters
+            {% elif selected_day == "tomorrow" %}Tomorrow's Starters
+            {% else %}Today's Starters
+            {% endif %}
+        </h1>
+        <p class="subtitle">{{ target_date|date:"l, F jS, Y" }}</p>
+        <div class="day-switcher">
+            <a class="day-btn {% if selected_day == 'yesterday' %}active{% endif %}" href="?date=yesterday">Yesterday</a>
+            <a class="day-btn {% if selected_day == 'today' %}active{% endif %}" href="?date=today">Today</a>
+            <a class="day-btn {% if selected_day == 'tomorrow' %}active{% endif %}" href="?date=tomorrow">Tomorrow</a>
+        </div>
+    </div>
+</div>
+
+{% if starters %}
+<div class="table-scroll condensed">
+<table id="starters-table">
+    <thead>
+        <tr>
+            <th class="sortable" data-type="text">Pitcher <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="text">Team <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="text">Matchup <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="num">Record <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="num">ERA <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="num">WHIP <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="num">FIP <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="num">K-BB% <span class="arrow">▼</span></th>
+            <th class="sortable" data-type="num">IP <span class="arrow">▼</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in starters %}
+        <tr>
+            <td class="sp-name" data-sort="{{ s.pitcher.name }}"><a href="{% url 'pitcher_detail' s.pitcher.mlb_id %}">{{ s.pitcher.name }}</a>{% if s.pitcher.throws %}<span class="hand-badge">{{ s.pitcher.throws }}HP</span>{% endif %}</td>
+            <td data-sort="{{ s.team.name }}">{{ s.team.name }}</td>
+            <td class="sp-matchup" data-sort="{{ s.opponent.name }}">{% if s.is_home %}vs {{ s.opponent.name }}{% else %}@ {{ s.opponent.name }}{% endif %}</td>
+            <td data-sort="{% if s.pitcher.wins is not None %}{{ s.pitcher.wins }}{% endif %}">{% if s.pitcher.record_display %}{{ s.pitcher.record_display }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-sort="{% if s.pitcher.era is not None %}{{ s.pitcher.era }}{% endif %}">{% if s.pitcher.era is not None %}{% if s.pitcher.era < 3.0 %}<span class="era-elite">{{ s.pitcher.era }}</span>{% elif s.pitcher.era < 4.0 %}<span class="era-good">{{ s.pitcher.era }}</span>{% elif s.pitcher.era < 5.0 %}<span class="era-avg">{{ s.pitcher.era }}</span>{% elif s.pitcher.era < 6.0 %}<span class="era-poor">{{ s.pitcher.era }}</span>{% else %}<span class="era-bad">{{ s.pitcher.era }}</span>{% endif %}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-sort="{% if s.pitcher.whip is not None %}{{ s.pitcher.whip }}{% endif %}">{% if s.pitcher.whip is not None %}{{ s.pitcher.whip }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-sort="{% if s.pitcher.fip is not None %}{{ s.pitcher.fip }}{% endif %}">{% if s.pitcher.fip is not None %}{{ s.pitcher.fip|floatformat:2 }}{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-sort="{% if s.pitcher.k_bb_pct is not None %}{{ s.pitcher.k_bb_pct }}{% endif %}">{% if s.pitcher.k_bb_pct is not None %}{{ s.pitcher.k_bb_pct|floatformat:1 }}%{% else %}<span class="na">—</span>{% endif %}</td>
+            <td data-sort="{% if s.pitcher.innings_pitched %}{{ s.pitcher.innings_pitched }}{% endif %}">{% if s.pitcher.innings_pitched %}{{ s.pitcher.innings_pitched }}{% else %}<span class="na">—</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p class="na">No projected starters for {{ target_date|date:"F jS" }}.</p>
+{% endif %}
+
+<script>
+(function () {
+    const table = document.getElementById('starters-table');
+    if (!table) return;
+    const headers = table.tHead.rows[0].cells;
+    const tbody = table.tBodies[0];
+
+    Array.from(headers).forEach((th, col) => {
+        if (!th.classList.contains('sortable')) return;
+        th.addEventListener('click', () => {
+            const numeric = th.dataset.type === 'num';
+            // Toggle: same column flips direction; new column starts ascending.
+            const asc = !(th.classList.contains('sorted') && th.dataset.dir === 'asc');
+
+            Array.from(headers).forEach(h => {
+                h.classList.remove('sorted');
+                const a = h.querySelector('.arrow');
+                if (a) a.textContent = '▼';
+            });
+            th.classList.add('sorted');
+            th.dataset.dir = asc ? 'asc' : 'desc';
+            const arrow = th.querySelector('.arrow');
+            if (arrow) arrow.textContent = asc ? '▲' : '▼';
+
+            const rows = Array.from(tbody.rows);
+            rows.sort((r1, r2) => {
+                const v1 = r1.cells[col].dataset.sort || '';
+                const v2 = r2.cells[col].dataset.sort || '';
+                // Blanks (missing stats) always sink to the bottom.
+                if (v1 === '' && v2 === '') return 0;
+                if (v1 === '') return 1;
+                if (v2 === '') return -1;
+                let cmp;
+                if (numeric) {
+                    cmp = parseFloat(v1) - parseFloat(v2);
+                } else {
+                    cmp = v1.localeCompare(v2);
+                }
+                return asc ? cmp : -cmp;
+            });
+            rows.forEach(r => tbody.appendChild(r));
+        });
+    });
+})();
+</script>
+
+{% endblock %}

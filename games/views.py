@@ -7,8 +7,9 @@ from datetime import timedelta
 
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse, JsonResponse
-from django.db.models import F, Prefetch
-from .models import Game, Team, Reliever, Hitter
+from django.db.models import F, Prefetch, Q
+from .models import Game, Team, Reliever, Hitter, Pitcher
+from games.services.mlb_api import get_pitcher_game_log
 from games.services.prediction import predict_game
 from games.services.csv_exports import (
     build_games_csv,
@@ -345,6 +346,109 @@ def game_prediction(request, game_id):
     }
 
     return render(request, "games/prediction.html", context)
+
+
+def _run_support_by_game(pitcher):
+    """Map game_id -> the pitcher's own team's runs, over his completed starts.
+
+    Run support is a game-total figure derived from stored Game rows (the MLB
+    gameLog doesn't carry the pitcher's team's runs), so it only covers games
+    already in our DB. Returns ``(mapping, avg_or_None, num_starts)``.
+    """
+    support = {}
+    for game in pitcher.home_starts.filter(home_score__isnull=False):
+        support[game.game_id] = game.home_score
+    for game in pitcher.away_starts.filter(away_score__isnull=False):
+        support[game.game_id] = game.away_score
+
+    values = list(support.values())
+    avg = round(sum(values) / len(values), 1) if values else None
+    return support, avg, len(values)
+
+
+def pitcher_detail(request, mlb_id):
+    pitcher = get_object_or_404(Pitcher, mlb_id=mlb_id)
+
+    game_log = get_pitcher_game_log(mlb_id)
+    support_by_game, run_support_avg, run_support_starts = _run_support_by_game(pitcher)
+
+    # Attach run support to each appearance where we have the game stored.
+    for entry in game_log:
+        entry["run_support"] = support_by_game.get(entry.get("game_id"))
+
+    # Pitcher has no stored team, so derive the current one: prefer the most
+    # recent game-log appearance, then fall back to their latest stored start.
+    team_name = game_log[0]["team"] if game_log else None
+    if not team_name:
+        latest_start = (
+            Game.objects.filter(Q(home_pitcher=pitcher) | Q(away_pitcher=pitcher))
+            .order_by("-date")
+            .select_related("home_team", "away_team")
+            .first()
+        )
+        if latest_start:
+            is_home = latest_start.home_pitcher_id == pitcher.id
+            team_name = (latest_start.home_team if is_home else latest_start.away_team).name
+
+    radar_scores, radar_raw = _pitcher_radar_scores(pitcher)
+    radar_available = sum(v is not None for v in radar_scores) >= 3
+    pitcher_radar_chart = json.dumps({
+        "labels": [m[1] for m in PITCHER_RADAR_METRICS],
+        "pitcher": pitcher.name,
+        "scores": radar_scores,
+        "raw": radar_raw,
+    })
+
+    context = {
+        "pitcher": pitcher,
+        "team_name": team_name,
+        "game_log": game_log,
+        "run_support_avg": run_support_avg,
+        "run_support_starts": run_support_starts,
+        "splits": _pitcher_splits(pitcher),
+        "pitcher_radar_chart": pitcher_radar_chart,
+        "pitcher_radar_available": radar_available,
+    }
+    return render(request, "games/pitcher.html", context)
+
+
+def pitcher_list(request):
+    """Projected starters for the selected day, one row per starter.
+
+    Flattens the day's games into a starter-centric list: each game contributes
+    its away starter then its home starter (skipping TBA slots), carrying the
+    opponent and home/away context so the row reads like a matchup.
+    """
+    day_param, target_date = _resolve_target_date(request)
+
+    games = Game.objects.select_related(
+        "home_team", "away_team", "home_pitcher", "away_pitcher"
+    ).filter(date=target_date).order_by(F("start_time_utc").asc(nulls_last=True), "game_id")
+
+    starters = []
+    for game in games:
+        if game.away_pitcher:
+            starters.append({
+                "pitcher": game.away_pitcher,
+                "team": game.away_team,
+                "opponent": game.home_team,
+                "is_home": False,
+                "start_time_utc": game.start_time_utc,
+            })
+        if game.home_pitcher:
+            starters.append({
+                "pitcher": game.home_pitcher,
+                "team": game.home_team,
+                "opponent": game.away_team,
+                "is_home": True,
+                "start_time_utc": game.start_time_utc,
+            })
+
+    return render(request, "games/pitcher_list.html", {
+        "starters": starters,
+        "selected_day": day_param,
+        "target_date": target_date,
+    })
 
 
 def export_csv(request):

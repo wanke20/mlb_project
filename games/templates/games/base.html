@@ -25,6 +25,7 @@
         <div class="nav-menu">
             <a class="nav-link" href="{% url 'game_list' %}">Games</a>
             <a class="nav-link" href="{% url 'trends' %}">Trends</a>
+            <a class="nav-link" href="{% url 'pitcher_list' %}">Starters</a>
             <a class="nav-link" href="{% url 'weather' %}">Weather</a>
             {% if user.is_authenticated %}
                 <a class="nav-link" href="{% url 'dashboard' %}">My Picks</a>
@@ -70,6 +71,7 @@
         <nav class="footer-links" aria-label="Footer">
             <a href="{% url 'game_list' %}">Games</a>
             <a href="{% url 'trends' %}">Trends</a>
+            <a href="{% url 'pitcher_list' %}">Starters</a>
             <a href="{% url 'weather' %}">Weather</a>
             {% if user.is_authenticated %}
                 <a href="{% url 'dashboard' %}">My Picks</a>

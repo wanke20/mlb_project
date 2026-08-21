@@ -66,6 +66,11 @@ class Pitcher(models.Model):
     walks = models.IntegerField(null=True, blank=True)
     innings_pitched = models.CharField(max_length=16, null=True, blank=True)
 
+    # Season won/lost decisions. Pulled from the same season pitching split as
+    # ERA/WHIP (see get_pitcher_stats).
+    wins = models.IntegerField(null=True, blank=True)
+    losses = models.IntegerField(null=True, blank=True)
+
     # Advanced metrics: FIP and K-BB% computed locally from statsapi;
     # wOBA, xERA, xwOBA, barrel% from Baseball Savant CSV leaderboards.
     fip = models.FloatField(null=True, blank=True)
@@ -96,6 +101,13 @@ class Pitcher(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def record_display(self):
+        """Won-lost record as 'W-L', or None when neither is recorded."""
+        if self.wins is None and self.losses is None:
+            return None
+        return f"{self.wins or 0}-{self.losses or 0}"
 
 
 class Game(models.Model):
